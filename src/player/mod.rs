@@ -13,6 +13,8 @@ mod awake;
 
 
 pub(super) fn plugin(app: &mut App) {
+    app.init_state::<PlayerState>();
+    
     app.add_plugins((
         animation::plugin,
         movement::plugin,
@@ -20,4 +22,11 @@ pub(super) fn plugin(app: &mut App) {
         asleep::plugin,
         awake::plugin,
     ));
+}
+
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+pub enum PlayerState {
+    #[default]
+    Awake,
+    Asleep,
 }
