@@ -10,6 +10,7 @@ mod movement;
 pub mod player;
 mod asleep;
 mod awake;
+mod camera;
 
 
 pub(super) fn plugin(app: &mut App) {
@@ -21,6 +22,7 @@ pub(super) fn plugin(app: &mut App) {
         player::plugin,
         asleep::plugin,
         awake::plugin,
+        camera::plugin,
     ));
 }
 

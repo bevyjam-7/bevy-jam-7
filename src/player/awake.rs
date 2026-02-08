@@ -29,6 +29,9 @@ fn inventory_system(mut commands: Commands) {
         Name::new("Inventory"),
         children![
             // Generate Inventory slots
+            for i in 0..INVENTORY_SIZE {
+                
+            }
             
         ]
     ));

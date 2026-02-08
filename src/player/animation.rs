@@ -166,7 +166,7 @@ impl PlayerAnimation {
     /// Return sprite index in the atlas.
     pub fn get_atlas_index(&self) -> usize {
         match self.state {
-            PlayerAnimationState::Idling => self.frame,
+            PlayerAnimationState::Idling => 6 + self.frame,
             PlayerAnimationState::Walking => 6 + self.frame,
         }
     }

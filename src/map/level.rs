@@ -1,6 +1,6 @@
 //! Spawn the main level.
 
-use bevy::prelude::*;
+use bevy::{mesh::RectangleMeshBuilder, prelude::*};
 
 use crate::{
     asset_tracking::LoadResource,
@@ -35,6 +35,8 @@ pub fn spawn_level(
     level_assets: Res<LevelAssets>,
     player_assets: Res<PlayerAssets>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.spawn((
         Name::new("Level"),
@@ -42,7 +44,8 @@ pub fn spawn_level(
         Visibility::default(),
         DespawnOnExit(Screen::Gameplay),
         children![
-            player(400.0, &player_assets, &mut texture_atlas_layouts),
+            player(100.0, &player_assets, &mut texture_atlas_layouts),
+            witch_house_map(&mut meshes, &mut materials),
             (
                 Name::new("Gameplay Music"),
                 music(level_assets.music.clone())
@@ -50,3 +53,23 @@ pub fn spawn_level(
         ],
     ));
 }
+
+/// A square entity that will be the background of the level
+pub fn witch_house_map(
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+) -> impl Bundle {
+    let house_mesh = meshes.add(Rectangle::new(800., 400.));
+    let house_material = materials.add(ColorMaterial::from(Color::WHITE));
+
+    (
+        Name::new("Witch House"),
+        WitchHouse,
+        Mesh2d(house_mesh),
+        MeshMaterial2d(house_material),
+    )
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component)]
+struct WitchHouse;
