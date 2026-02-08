@@ -82,7 +82,7 @@ fn trigger_step_sound_effect(
     for animation in &mut step_query {
         if animation.state == PlayerAnimationState::Walking
             && animation.changed()
-            && (animation.frame == 2 || animation.frame == 4)
+            && (animation.frame == 1 || animation.frame == 3)
         {
             let rng = &mut rand::rng();
             let random_step = player_assets.steps.choose(rng).unwrap().clone();
@@ -109,13 +109,13 @@ pub enum PlayerAnimationState {
 
 impl PlayerAnimation {
     /// The number of idle frames.
-    const IDLE_FRAMES: usize = 3;
+    const IDLE_FRAMES: usize = 1;
     /// The duration of each idle frame.
-    const IDLE_INTERVAL: Duration = Duration::from_millis(500);
+    const IDLE_INTERVAL: Duration = Duration::from_millis(170);
     /// The number of walking frames.
     const WALKING_FRAMES: usize = 4;
     /// The duration of each walking frame.
-    const WALKING_INTERVAL: Duration = Duration::from_millis(50);
+    const WALKING_INTERVAL: Duration = Duration::from_millis(170);
 
     fn idling() -> Self {
         Self {
@@ -168,8 +168,8 @@ impl PlayerAnimation {
     /// Return sprite index in the atlas.
     pub fn get_atlas_index(&self) -> usize {
         match self.state {
-            PlayerAnimationState::Idling => self.frame,
-            PlayerAnimationState::Walking => 6 + self.frame,
+            PlayerAnimationState::Idling => 0 + self.frame,
+            PlayerAnimationState::Walking => 0 + self.frame,
         }
     }
 }
