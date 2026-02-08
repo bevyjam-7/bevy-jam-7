@@ -4,9 +4,9 @@
 //! - [Sprite animation](https://github.com/bevyengine/bevy/blob/latest/examples/2d/sprite_animation.rs)
 //! - [Timers](https://github.com/bevyengine/bevy/blob/latest/examples/time/timers.rs)
 
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::debug};
 use rand::prelude::*;
-use std::time::Duration;
+use std::{clone, time::Duration};
 
 use crate::{
     AppSystems, PausableSystems,
@@ -41,34 +41,46 @@ fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation
 
 /// Update the sprite direction and animation state (idling/walking).
 fn update_animation_movement(
-    mut player_query: Query<(&MovementController, &mut Sprite, &mut PlayerAnimation)>,
+    mut player_query: Query<(&MovementController, &mut Sprite, &mut PlayerAnimation, &mut Facing)>,
 ) {
-    for (controller, mut sprite, mut animation) in &mut player_query {
-        let dx = controller.intent.x;
-        if dx != 0.0 {
-            sprite.flip_x = dx < 0.0;
-        }
+    for (controller, mut sprite, mut animation, mut facing) in &mut player_query {
+    let intent = controller.intent;
 
-        let animation_state = if controller.intent == Vec2::ZERO {
-            PlayerAnimationState::Idling
-        } else {
-            PlayerAnimationState::Walking
-        };
-        animation.update_state(animation_state);
+    if intent != Vec2::ZERO {
+        *facing = Facing(FacingDirection::from_vec2(intent));
     }
+
+    // sprite flip (optional, you may later remove this)
+    if intent.x != 0.0 {
+        sprite.flip_x = intent.x < 0.0;
+    }
+
+    let animation_state = if intent == Vec2::ZERO {
+        PlayerAnimationState::Idling
+    } else {
+        PlayerAnimationState::Walking
+    };
+
+    animation.update_state(animation_state);
+}
+
 }
 
 /// Update the texture atlas to reflect changes in the animation.
-fn update_animation_atlas(mut query: Query<(&PlayerAnimation, &mut Sprite)>) {
-    for (animation, mut sprite) in &mut query {
+fn update_animation_atlas(
+    mut query: Query<(&PlayerAnimation, &Facing, &mut Sprite)>
+) {
+    for (animation, facing, mut sprite) in &mut query {
         let Some(atlas) = sprite.texture_atlas.as_mut() else {
             continue;
         };
+
         if animation.changed() {
-            atlas.index = animation.get_atlas_index();
+            atlas.index = animation.get_atlas_index(facing.0);
         }
     }
 }
+
 
 /// If the player is moving, play a step sound effect synchronized with the
 /// animation.
@@ -80,7 +92,7 @@ fn trigger_step_sound_effect(
     for animation in &mut step_query {
         if animation.state == PlayerAnimationState::Walking
             && animation.changed()
-            && (animation.frame == 2 || animation.frame == 5)
+            && (animation.frame == 2 || animation.frame == 4)
         {
             let rng = &mut rand::rng();
             let random_step = player_assets.steps.choose(rng).unwrap().clone();
@@ -107,11 +119,11 @@ pub enum PlayerAnimationState {
 
 impl PlayerAnimation {
     /// The number of idle frames.
-    const IDLE_FRAMES: usize = 2;
+    const IDLE_FRAMES: usize = 3;
     /// The duration of each idle frame.
     const IDLE_INTERVAL: Duration = Duration::from_millis(500);
     /// The number of walking frames.
-    const WALKING_FRAMES: usize = 6;
+    const WALKING_FRAMES: usize = 4;
     /// The duration of each walking frame.
     const WALKING_INTERVAL: Duration = Duration::from_millis(50);
 
@@ -163,11 +175,60 @@ impl PlayerAnimation {
         self.timer.is_finished()
     }
 
-    /// Return sprite index in the atlas.
-    pub fn get_atlas_index(&self) -> usize {
-        match self.state {
-            PlayerAnimationState::Idling => 6 + self.frame,
-            PlayerAnimationState::Walking => 6 + self.frame,
+    /// Return sprite index in the atlas depending on faced direction
+    pub fn get_atlas_index(
+        &self,
+        direction: FacingDirection,
+    ) -> usize {
+        match direction {
+            FacingDirection::Up => match self.state {
+                PlayerAnimationState::Idling => 0,
+                PlayerAnimationState::Walking => 1 + self.frame,
+            },
+
+            FacingDirection::Left => match self.state {
+                PlayerAnimationState::Idling => 4,
+                PlayerAnimationState::Walking => 5 + self.frame,
+            },
+
+            FacingDirection::Right => match self.state {
+                PlayerAnimationState::Idling => 8,
+                PlayerAnimationState::Walking => 9 + self.frame,
+            },
+
+            FacingDirection::Down => match self.state {
+                PlayerAnimationState::Idling => 4,
+                PlayerAnimationState::Walking => 5 + self.frame,
+            },
         }
     }
 }
+
+// possible directions that can be faced
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FacingDirection 
+{
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl FacingDirection {
+    pub fn from_vec2(v: Vec2) -> Self {
+        if v.y > 0.0 {
+            FacingDirection::Up
+        } else if v.x < 0.0 {
+            FacingDirection::Left
+        } else if v.x > 0.0 {
+            FacingDirection::Right
+        } else {
+            FacingDirection::Down
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Facing(pub FacingDirection);
+
+
