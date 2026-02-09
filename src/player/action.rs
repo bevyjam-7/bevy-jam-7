@@ -16,7 +16,7 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 
-use crate::{AppSystems, PausableSystems, player::player::Player};
+use crate::{AppSystems, PausableSystems, player::{PlayerState, player::Player}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -39,6 +39,7 @@ pub(super) fn plugin(app: &mut App) {
 pub enum PlayerAction {
     #[actionlike(DualAxis)]
     Move,
+    Honkshoo,
 }
 
 impl PlayerAction {
@@ -47,10 +48,12 @@ impl PlayerAction {
 
         // Default gamepad mapping for movement
         input_map.insert_dual_axis(Self::Move, GamepadStick::LEFT);
+        input_map.insert(Self::Honkshoo, GamepadButton::South);
 
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
         input_map.insert_dual_axis(Self::Move, VirtualDPad::arrow_keys());
+        input_map.insert(Self::Honkshoo, KeyCode::Space);
         
         input_map
     }
@@ -59,6 +62,8 @@ impl PlayerAction {
 }
 
 fn apply_actions(
+    mut player_state: ResMut<State<PlayerState>>,
+    mut next_player_state: ResMut<NextState<PlayerState>>,
     mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController), With<Player>>,
 ) {
     for (action_state, mut controller) in action_query.iter_mut() {
@@ -67,6 +72,13 @@ fn apply_actions(
         controller.intent = action_state.axis_pair(&PlayerAction::Move).normalize_or_zero();
 
         // Other actions can be handled here as well.
+        if action_state.just_pressed(&PlayerAction::Honkshoo) {
+            if player_state.get() == &PlayerState::Awake {
+                next_player_state.set(PlayerState::Asleep);
+            } else {
+                next_player_state.set(PlayerState::Awake);
+            }
+        }
     }
 }
 
