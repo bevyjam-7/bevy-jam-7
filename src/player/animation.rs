@@ -52,19 +52,29 @@ fn update_animation_movement(
         let animation_state = if controller.intent == Vec2::ZERO {
             PlayerAnimationState::Idling
         } else {
-            PlayerAnimationState::Walking
+            // If the player is moving in both x and y direction, prioritize vertical animation. 
+            if controller.intent.y > 0.0 {
+                animation.facing = FacingDirection::Up;
+                PlayerAnimationState::WalkingUp
+            } else if controller.intent.y < 0.0 {
+                animation.facing = FacingDirection::Down;
+                PlayerAnimationState::WalkingDown
+            } else {
+                animation.facing = FacingDirection::Side;
+                PlayerAnimationState::WalkingSide
+            }
         };
         animation.update_state(animation_state);
     }
 }
 
 /// Update the texture atlas to reflect changes in the animation.
-fn update_animation_atlas(mut query: Query<(&PlayerAnimation, &mut Sprite)>) {
-    for (animation, mut sprite) in &mut query {
+fn update_animation_atlas(mut query: Query<(&mut PlayerAnimation, &mut Sprite)>) {
+    for (mut animation, mut sprite) in &mut query {
         let Some(atlas) = sprite.texture_atlas.as_mut() else {
             continue;
         };
-        if animation.changed() {
+        if animation.should_update_sprite() {
             atlas.index = animation.get_atlas_index();
         }
     }
@@ -77,11 +87,11 @@ fn update_animation_atlas(mut query: Query<(&PlayerAnimation, &mut Sprite)>) {
 fn trigger_step_sound_effect(
     mut commands: Commands,
     player_assets: If<Res<PlayerAssets>>,
-    mut step_query: Query<&PlayerAnimation>,
+    mut step_query: Query<&mut PlayerAnimation>,
 ) {
-    for animation in &mut step_query {
-        if animation.state == PlayerAnimationState::Walking
-            && animation.changed()
+    for mut animation in &mut step_query {
+        if (animation.state == PlayerAnimationState::WalkingSide || animation.state == PlayerAnimationState::WalkingUp || animation.state == PlayerAnimationState::WalkingDown)
+            && animation.should_update_sprite()
             && (animation.frame == 1 || animation.frame == 3)
         {
             let rng = &mut rand::rng();
@@ -99,12 +109,16 @@ pub struct PlayerAnimation {
     timer: Timer,
     frame: usize,
     state: PlayerAnimationState,
+    facing: FacingDirection,
+    state_changed: bool,
 }
 
 #[derive(Reflect, PartialEq)]
 pub enum PlayerAnimationState {
     Idling,
-    Walking,
+    WalkingSide,
+    WalkingUp,
+    WalkingDown,
 }
 
 impl PlayerAnimation {
@@ -122,14 +136,38 @@ impl PlayerAnimation {
             timer: Timer::new(Self::IDLE_INTERVAL, TimerMode::Repeating),
             frame: 0,
             state: PlayerAnimationState::Idling,
+            facing: FacingDirection::Down,
+            state_changed: true,
         }
     }
 
-    fn walking() -> Self {
+    fn walking_side() -> Self {
         Self {
             timer: Timer::new(Self::WALKING_INTERVAL, TimerMode::Repeating),
             frame: 0,
-            state: PlayerAnimationState::Walking,
+            state: PlayerAnimationState::WalkingSide,
+            facing: FacingDirection::Side,
+            state_changed: true,
+        }
+    }
+
+    fn walking_up() -> Self {
+        Self {
+            timer: Timer::new(Self::WALKING_INTERVAL, TimerMode::Repeating),
+            frame: 0,
+            state: PlayerAnimationState::WalkingUp,
+            facing: FacingDirection::Up,
+            state_changed: true,
+        }
+    }
+
+    fn walking_down() -> Self {
+        Self {
+            timer: Timer::new(Self::WALKING_INTERVAL, TimerMode::Repeating),
+            frame: 0,
+            state: PlayerAnimationState::WalkingDown,
+            facing: FacingDirection::Down,
+            state_changed: true,
         }
     }
 
@@ -146,30 +184,53 @@ impl PlayerAnimation {
         self.frame = (self.frame + 1)
             % match self.state {
                 PlayerAnimationState::Idling => Self::IDLE_FRAMES,
-                PlayerAnimationState::Walking => Self::WALKING_FRAMES,
+                PlayerAnimationState::WalkingSide => Self::WALKING_FRAMES,
+                PlayerAnimationState::WalkingUp => Self::WALKING_FRAMES,
+                PlayerAnimationState::WalkingDown => Self::WALKING_FRAMES,
             };
     }
 
     /// Update animation state if it changes.
     pub fn update_state(&mut self, state: PlayerAnimationState) {
         if self.state != state {
-            match state {
-                PlayerAnimationState::Idling => *self = Self::idling(),
-                PlayerAnimationState::Walking => *self = Self::walking(),
-            }
+            *self = match state {
+                PlayerAnimationState::Idling => Self::idling(),
+                PlayerAnimationState::WalkingSide => Self::walking_side(),
+                PlayerAnimationState::WalkingUp => Self::walking_up(),
+                PlayerAnimationState::WalkingDown => Self::walking_down(),
+            };
+            self.state_changed = true;
         }
     }
 
     /// Whether animation changed this tick.
-    pub fn changed(&self) -> bool {
-        self.timer.is_finished()
+    pub fn should_update_sprite(&mut self) -> bool {
+        let frame_advanced = self.timer.is_finished();
+        let changed = frame_advanced || self.state_changed;
+        self.state_changed = false;
+        changed
     }
 
     /// Return sprite index in the atlas.
     pub fn get_atlas_index(&self) -> usize {
         match self.state {
-            PlayerAnimationState::Idling => 0 + self.frame,
-            PlayerAnimationState::Walking => 0 + self.frame,
+            PlayerAnimationState::Idling => match self.facing {
+                FacingDirection::Side => 0,
+                FacingDirection::Up => 4,
+                FacingDirection::Down => 4,
+            },
+            PlayerAnimationState::Idling => 0 +self.frame,
+            PlayerAnimationState::WalkingSide => 0 + self.frame,
+            PlayerAnimationState::WalkingUp => 4 + self.frame,
+            PlayerAnimationState::WalkingDown => 4 + self.frame,
         }
     }
 }
+
+#[derive(Reflect, PartialEq, Clone, Copy)]
+pub enum FacingDirection {
+    Side,
+    Up,
+    Down,
+}
+
