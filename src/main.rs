@@ -12,6 +12,7 @@ mod menus;
 mod screens;
 mod theme;
 mod map;
+pub mod game_consts;
 
 use bevy::{asset::AssetMetaCheck, camera::CameraProjection, prelude::*};
 

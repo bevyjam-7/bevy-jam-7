@@ -1,38 +1,22 @@
 use bevy::prelude::*;
 
-use crate::player::PlayerState;
+use crate::player::{PlayerState, action::MovementController, player::Player};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((
-        
-    ));
+    app.add_systems(OnExit(PlayerState::Asleep), restore_player_movement);
 }
 
-const INVENTORY_SIZE: usize = 3;
 
-// When the player is awake, they are able to interact with the world
-
-// Function which allows player to interact with the world
-
-/// Inventory for the player (only visible when awake)
-fn inventory_system(mut commands: Commands) {
-    // Spawn inventory UI
-    commands.spawn((
-        Node {
-            display: Display::Grid,
-            align_self: AlignSelf::FlexStart,
-            justify_self: JustifySelf::Center,
-            ..Default::default()
-        }, 
-        Pickable::IGNORE,
-        DespawnOnExit(PlayerState::Awake),
-        Name::new("Inventory"),
-        children![
-            // Generate Inventory slots
-            for i in 0..INVENTORY_SIZE {
-                
-            }
-            
-        ]
-    ));
+// Gives player movement when player is awake.
+fn restore_player_movement(
+    mut commands: Commands,
+    player_query: Query<Entity, With<Player>>,
+) {
+    for entity in &player_query {
+        commands.entity(entity)
+            .insert(MovementController {
+                max_speed: 400.0,
+                ..default()
+            });
+    }
 }
