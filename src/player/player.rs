@@ -12,7 +12,7 @@ use crate::{
     asset_tracking::LoadResource,
     player::{
         animation::PlayerAnimation,
-        movement::{MovementController, PlayerAction},
+        action::{MovementController, PlayerAction},
     },
 };
 
