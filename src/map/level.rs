@@ -3,7 +3,7 @@
 use bevy::{mesh::RectangleMeshBuilder, prelude::*};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, map::teleporter::{create_teleporter_pair, link_teleporters}, player::player::{PlayerAssets, player}, screens::Screen
+    asset_tracking::LoadResource, audio::music, game_consts::{TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION}, map::teleporter::{create_teleporter_pair, link_teleporters}, player::player::{PlayerAssets, player}, screens::Screen
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -35,8 +35,8 @@ pub fn spawn_level(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let teleporter_position_a = Vec3::new(-200., 0., 3.);
-    let teleporter_position_b = Vec3::new(200., 0., 3.);
+    let teleporter_position_a = TELEPORTER_A_LOCATION;
+    let teleporter_position_b = TELEPORTER_B_LOCATION;
 
     let (teleporter_1, teleporter_2) = create_teleporter_pair(
         teleporter_position_a,

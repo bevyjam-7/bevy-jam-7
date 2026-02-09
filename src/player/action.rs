@@ -16,7 +16,7 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 
-use crate::{AppSystems, PausableSystems, player::{PlayerState, player::Player}};
+use crate::{AppSystems, PausableSystems, map::teleporter::{self, Teleporter}, player::{PlayerState, player::Player}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -81,11 +81,6 @@ fn apply_actions(
             } else {
                 next_player_state.set(PlayerState::Awake);
             }
-        }
-
-        if action_state.just_pressed(&PlayerAction::Teleport) {
-            println!("Teleport action triggered!");
-            // Teleportation logic can be implemented here, such as checking if the player is near a teleporter and then changing the player's position.
         }
     }
 }

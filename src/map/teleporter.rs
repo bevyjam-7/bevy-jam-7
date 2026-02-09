@@ -1,17 +1,17 @@
 use bevy::prelude::*;
 
-use crate::{AppSystems, PausableSystems, player::{PlayerState, player::Player}, screens::Screen};
+use crate::{AppSystems, PausableSystems, game_consts::TELEPORTER_PROXIMITY_RADIUS, player::{PlayerState, player::Player}, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
-    // app.add_systems(Update, player_near_teleporter
-    //     .chain()
-    //     .in_set(AppSystems::Update)
-    //     .in_set(PausableSystems),
-    // );
+    app.add_systems(Update, player_near_teleporter
+        .chain()
+        .in_set(AppSystems::Update)
+        .in_set(PausableSystems),
+    );
 }
 // Teleporter component.
 #[derive(Component, Debug, Clone, PartialEq, Copy, Reflect)]
-struct Teleporter {
+pub struct Teleporter {
     pub destination: Vec3,
     // The entity which is currently inside the teleporter.
     pub containing_entity: Entity,
@@ -20,7 +20,6 @@ struct Teleporter {
     // Should only be true when the player is initiating the teleportation.
     pub can_teleport: bool,
 }
-
 
 /// Query if player is near a teleporter
 fn player_near_teleporter(
@@ -34,9 +33,9 @@ fn player_near_teleporter(
     for player_transform in &player_query {
         for (teleporter_transform, mut teleporter) in &mut teleporter_query {
             let distance = player_transform.translation.distance(teleporter_transform.translation);
-            if distance < 50.0 {
+            if distance < TELEPORTER_PROXIMITY_RADIUS {
                 teleporter.can_teleport = true;
-                println!("Player is near teleporter, can teleport.");
+                info!("Player is near teleporter, can teleport.");
                 return;
             }
         }
@@ -45,32 +44,32 @@ fn player_near_teleporter(
 
 impl Teleporter {
     /// Teleports the containing entity to the teleporter's buddy's location.
-    fn teleport(
-        &mut self, commands: &mut Commands, 
-        mut teleporter_query: Query<(&Transform, &mut Teleporter)>
-    ) {
-        if self.containing_entity == Entity::PLACEHOLDER && self.can_teleport {
-            println!("Teleporter has no containing entity or cannot teleport.");
-            return; // No entity to teleport.
-        }
-        let Ok((buddy_transform, mut buddy_teleporter)) = teleporter_query.get_mut(self.tele_buddy) else {
-            println!("Buddy teleporter doesn't exist.");
-            return; // Buddy teleporter doesn't exist.
-        };
-        // Check if buddy teleporter is currently occupied, if so, do not teleport.
-        if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
-            println!("Buddy teleporter is currently occupied, cannot teleport.");
-            return; // Buddy teleporter is currently occupied.
-        }
-        let teleporter_item = self.containing_entity;
-        // Clear self's containing entity
-        self.containing_entity = Entity::PLACEHOLDER;
-        commands.entity(teleporter_item)
-            .insert(Transform::from_translation(buddy_transform.translation));
+    // pub fn teleport(
+    //     &mut self, commands: &mut Commands, 
+    //     mut teleporter_query: Query<(&Transform, &mut Teleporter)>
+    // ) {
+    //     if self.containing_entity == Entity::PLACEHOLDER && self.can_teleport {
+    //         info!("Teleporter has no containing entity or cannot teleport.");
+    //         return; // No entity to teleport.
+    //     }
+    //     let Ok((buddy_transform, mut buddy_teleporter)) = teleporter_query.get_mut(self.tele_buddy) else {
+    //         info!("Buddy teleporter doesn't exist.");
+    //         return; // Buddy teleporter doesn't exist.
+    //     };
+    //     // Check if buddy teleporter is currently occupied, if so, do not teleport.
+    //     if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
+    //         info!("Buddy teleporter is currently occupied, cannot teleport.");
+    //         return; // Buddy teleporter is currently occupied.
+    //     }
+    //     let teleporter_item = self.containing_entity;
+    //     // Clear self's containing entity
+    //     self.containing_entity = Entity::PLACEHOLDER;
+    //     commands.entity(teleporter_item)
+    //         .insert(Transform::from_translation(buddy_transform.translation));
 
-        // Update the buddy teleporter's containing entity.
-        buddy_teleporter.set_containing_entity(teleporter_item);
-    }
+    //     // Update the buddy teleporter's containing entity.
+    //     buddy_teleporter.set_containing_entity(teleporter_item);
+    // }
 
     /// Sets the containing entity of the teleporter.
     fn set_containing_entity(&mut self, entity: Entity) {
@@ -91,6 +90,7 @@ pub fn create_teleporter_pair(
     let teleporter_mesh = &meshes.add(Rectangle::new(50., 50.));
     let teleporter_material = materials.add(ColorMaterial::from(Color::BLACK));
     let teleporter_a = (
+        Name::new("Teleporter A"),
         DespawnOnExit(Screen::Gameplay),
         Transform::from_translation(position_a),
         GlobalTransform::default(),
@@ -99,6 +99,7 @@ pub fn create_teleporter_pair(
     );
     
     let teleporter_b = (
+        Name::new("Teleporter B"),
         DespawnOnExit(Screen::Gameplay),
         Transform::from_translation(position_b),
         GlobalTransform::default(),
