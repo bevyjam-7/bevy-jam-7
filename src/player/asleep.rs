@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::player::{PlayerState, movement::MovementController, player::{PlayerAssets, Player, player}};
+use crate::player::{PlayerState, action::MovementController, player::{PlayerAssets, Player, player}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(PlayerState::Asleep), spawn_astral_projection_player);

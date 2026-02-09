@@ -6,7 +6,7 @@
 use bevy::prelude::*;
 
 mod animation;
-mod movement;
+mod action;
 pub mod player;
 mod asleep;
 mod awake;
@@ -18,7 +18,7 @@ pub(super) fn plugin(app: &mut App) {
     
     app.add_plugins((
         animation::plugin,
-        movement::plugin,
+        action::plugin,
         player::plugin,
         asleep::plugin,
         awake::plugin,
