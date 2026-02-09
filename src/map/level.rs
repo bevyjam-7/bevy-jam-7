@@ -3,10 +3,7 @@
 use bevy::{mesh::RectangleMeshBuilder, prelude::*};
 
 use crate::{
-    asset_tracking::LoadResource,
-    audio::music,
-    player::player::{PlayerAssets, player},
-    screens::Screen,
+    asset_tracking::LoadResource, audio::music, map::teleporter::{create_teleporter_pair, link_teleporters}, player::player::{PlayerAssets, player}, screens::Screen
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -38,6 +35,12 @@ pub fn spawn_level(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    let (teleporter_1, teleporter_2) = create_teleporter_pair(
+        Vec3::new(-200., 0., 3.),
+        Vec3::new(200., 0., 3.),
+        &mut meshes,
+        &mut materials,
+    );
     commands.spawn((
         Name::new("Level"),
         Transform::default(),
@@ -46,12 +49,15 @@ pub fn spawn_level(
         children![
             player(100.0, &player_assets, &mut texture_atlas_layouts),
             witch_house_map(&mut meshes, &mut materials),
+            teleporter_1,
+            teleporter_2,
             (
                 Name::new("Gameplay Music"),
                 music(level_assets.music.clone())
             )
         ],
     ));
+
 }
 
 /// A square entity that will be the background of the level
