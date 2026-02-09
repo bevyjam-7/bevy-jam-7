@@ -219,7 +219,7 @@ impl PlayerAnimation {
                 FacingDirection::Up => 4,
                 FacingDirection::Down => 4,
             },
-            PlayerAnimationState::Idling => 0 +self.frame,
+            PlayerAnimationState::Idling => 0 + self.frame,
             PlayerAnimationState::WalkingSide => 0 + self.frame,
             PlayerAnimationState::WalkingUp => 4 + self.frame,
             PlayerAnimationState::WalkingDown => 4 + self.frame,
