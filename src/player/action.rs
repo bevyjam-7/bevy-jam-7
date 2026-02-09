@@ -40,6 +40,7 @@ pub enum PlayerAction {
     #[actionlike(DualAxis)]
     Move,
     Honkshoo,
+    Teleport,
 }
 
 impl PlayerAction {
@@ -49,11 +50,13 @@ impl PlayerAction {
         // Default gamepad mapping for movement
         input_map.insert_dual_axis(Self::Move, GamepadStick::LEFT);
         input_map.insert(Self::Honkshoo, GamepadButton::South);
+        input_map.insert(Self::Teleport, GamepadButton::East);
 
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
         input_map.insert_dual_axis(Self::Move, VirtualDPad::arrow_keys());
         input_map.insert(Self::Honkshoo, KeyCode::Space);
+        input_map.insert(Self::Teleport, KeyCode::KeyQ);
         
         input_map
     }
@@ -78,6 +81,11 @@ fn apply_actions(
             } else {
                 next_player_state.set(PlayerState::Awake);
             }
+        }
+
+        if action_state.just_pressed(&PlayerAction::Teleport) {
+            println!("Teleport action triggered!");
+            // Teleportation logic can be implemented here, such as checking if the player is near a teleporter and then changing the player's position.
         }
     }
 }

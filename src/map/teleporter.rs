@@ -1,23 +1,24 @@
 use bevy::prelude::*;
 
-use crate::player::{PlayerState, player::Player};
+use crate::{AppSystems, PausableSystems, player::{PlayerState, player::Player}, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
-
+    // app.add_systems(Update, player_near_teleporter
+    //     .chain()
+    //     .in_set(AppSystems::Update)
+    //     .in_set(PausableSystems),
+    // );
 }
-
-struct LinkedTelePairs {
-    teleporter_a: Entity,
-    teleporter_b: Entity,
-}
-
 // Teleporter component.
-#[derive(Component, Debug, Clone, PartialEq, Reflect)]
+#[derive(Component, Debug, Clone, PartialEq, Copy, Reflect)]
 struct Teleporter {
     pub destination: Vec3,
     // The entity which is currently inside the teleporter.
-    pub containing_entity: Vec<Entity>,
-    pub tele_buddy: Option<Entity>,
+    pub containing_entity: Entity,
+    // The teleporter that this teleporter is linked to.
+    pub tele_buddy: Entity,
+    // Should only be true when the player is initiating the teleportation.
+    pub can_teleport: bool,
 }
 
 
@@ -25,34 +26,62 @@ struct Teleporter {
 fn player_near_teleporter(
     player_state: Res<State<PlayerState>>,
     player_query: Query<&Transform, With<Player>>,
-    teleporter_query: Query<(&Transform, &Teleporter)>,
+    mut teleporter_query: Query<(&Transform, &mut Teleporter)>,
 ) {
     if player_state.get() != &PlayerState::Awake {
         return; // Only check for teleportation when the player is awake.
     }
     for player_transform in &player_query {
-        for (teleporter_transform, teleporter) in &teleporter_query {
+        for (teleporter_transform, mut teleporter) in &mut teleporter_query {
             let distance = player_transform.translation.distance(teleporter_transform.translation);
             if distance < 50.0 {
-                
+                teleporter.can_teleport = true;
+                println!("Player is near teleporter, can teleport.");
+                return;
             }
         }
     }
 }
 
 impl Teleporter {
-    /// Teleport the entity inside the teleporter to the teleporter's destination.
-    fn teleport(&mut self, commands: &mut Commands) {
-        // remove the entity from the teleporter's containing_entity list
-        for entity in &self.containing_entity {
-            commands.entity(*entity).insert(Transform::from_translation(self.destination));
+    /// Teleports the containing entity to the teleporter's buddy's location.
+    fn teleport(
+        &mut self, commands: &mut Commands, 
+        mut teleporter_query: Query<(&Transform, &mut Teleporter)>
+    ) {
+        if self.containing_entity == Entity::PLACEHOLDER && self.can_teleport {
+            println!("Teleporter has no containing entity or cannot teleport.");
+            return; // No entity to teleport.
         }
-        self.containing_entity.clear();
+        let Ok((buddy_transform, mut buddy_teleporter)) = teleporter_query.get_mut(self.tele_buddy) else {
+            println!("Buddy teleporter doesn't exist.");
+            return; // Buddy teleporter doesn't exist.
+        };
+        // Check if buddy teleporter is currently occupied, if so, do not teleport.
+        if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
+            println!("Buddy teleporter is currently occupied, cannot teleport.");
+            return; // Buddy teleporter is currently occupied.
+        }
+        let teleporter_item = self.containing_entity;
+        // Clear self's containing entity
+        self.containing_entity = Entity::PLACEHOLDER;
+        commands.entity(teleporter_item)
+            .insert(Transform::from_translation(buddy_transform.translation));
+
+        // Update the buddy teleporter's containing entity.
+        buddy_teleporter.set_containing_entity(teleporter_item);
     }
+
+    /// Sets the containing entity of the teleporter.
+    fn set_containing_entity(&mut self, entity: Entity) {
+        self.containing_entity = entity;
+    }
+
+
 }
 
 
-/// Creates a pair of teleporters
+/// Bundle creation for a pair of teleporters
 pub fn create_teleporter_pair(
     position_a: Vec3,
     position_b: Vec3,
@@ -62,7 +91,7 @@ pub fn create_teleporter_pair(
     let teleporter_mesh = &meshes.add(Rectangle::new(50., 50.));
     let teleporter_material = materials.add(ColorMaterial::from(Color::BLACK));
     let teleporter_a = (
-        Teleporter { destination: position_b, containing_entity: Vec::with_capacity(1), tele_buddy: None },
+        DespawnOnExit(Screen::Gameplay),
         Transform::from_translation(position_a),
         GlobalTransform::default(),
         Mesh2d(teleporter_mesh.clone()),
@@ -70,7 +99,7 @@ pub fn create_teleporter_pair(
     );
     
     let teleporter_b = (
-        Teleporter { destination: position_a, containing_entity: Vec::with_capacity(1), tele_buddy: None },
+        DespawnOnExit(Screen::Gameplay),
         Transform::from_translation(position_b),
         GlobalTransform::default(),
         Mesh2d(teleporter_mesh.clone()),
@@ -80,18 +109,18 @@ pub fn create_teleporter_pair(
     (teleporter_a, teleporter_b)
 }
 
+/// Links two teleporters together so that they teleport to each other.
+/// kinda hacky because im passing the position for both this and the create_teleporter_pair function, but it works for now.
 pub fn link_teleporters(
-    mut commands: Commands,
-    mut teleporter_query: Query<(Entity, &mut Teleporter)>,
-    
+    commands: &mut Commands,
+    position_a: Vec3,
+    position_b: Vec3, 
+    teleporter_a: impl Bundle, 
+    teleporter_b: impl Bundle
 ) {
-    let mut teleporters = teleporter_query.iter_mut().collect::<Vec<_>>();
-    if teleporters.len() != 2 {
-        panic!("Expected exactly 2 teleporters, found {}", teleporters.len());
-    }
-    let (entity_a, mut teleporter_a) = teleporters.remove(0);
-    let (entity_b, mut teleporter_b) = teleporters.remove(0);
+    let teleporter_a_entity = commands.spawn(teleporter_a).id();
+    let teleporter_b_entity = commands.spawn(teleporter_b).id();
 
-    teleporter_a.tele_buddy = Some(entity_b);
-    teleporter_b.tele_buddy = Some(entity_a);
+    commands.entity(teleporter_a_entity).insert(Teleporter { destination: position_b, containing_entity: Entity::PLACEHOLDER, tele_buddy: teleporter_b_entity, can_teleport: false });
+    commands.entity(teleporter_b_entity).insert(Teleporter { destination: position_a, containing_entity: Entity::PLACEHOLDER, tele_buddy: teleporter_a_entity, can_teleport: false });
 }

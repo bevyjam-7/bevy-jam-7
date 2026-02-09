@@ -35,11 +35,21 @@ pub fn spawn_level(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    let teleporter_position_a = Vec3::new(-200., 0., 3.);
+    let teleporter_position_b = Vec3::new(200., 0., 3.);
+
     let (teleporter_1, teleporter_2) = create_teleporter_pair(
-        Vec3::new(-200., 0., 3.),
-        Vec3::new(200., 0., 3.),
+        teleporter_position_a,
+        teleporter_position_b,
         &mut meshes,
         &mut materials,
+    );
+    link_teleporters(
+        &mut commands, 
+        teleporter_position_a, 
+        teleporter_position_b, 
+        teleporter_1, 
+        teleporter_2
     );
     commands.spawn((
         Name::new("Level"),
@@ -49,15 +59,12 @@ pub fn spawn_level(
         children![
             player(100.0, &player_assets, &mut texture_atlas_layouts),
             witch_house_map(&mut meshes, &mut materials),
-            teleporter_1,
-            teleporter_2,
             (
                 Name::new("Gameplay Music"),
                 music(level_assets.music.clone())
             )
         ],
     ));
-
 }
 
 /// A square entity that will be the background of the level
