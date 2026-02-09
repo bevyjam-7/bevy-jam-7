@@ -8,6 +8,7 @@ use bevy::prelude::*;
 mod animation;
 mod action;
 pub mod player;
+pub mod player_ghost;
 mod asleep;
 mod awake;
 mod camera;
@@ -20,6 +21,7 @@ pub(super) fn plugin(app: &mut App) {
         animation::plugin,
         action::plugin,
         player::plugin,
+        player_ghost::plugin,
         asleep::plugin,
         awake::plugin,
         camera::plugin,
