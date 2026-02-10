@@ -1,13 +1,17 @@
 use bevy::prelude::*;
 
-use crate::player::{PlayerState, action::MovementController, player::Player};
+use crate::player::{PlayerState, action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer,asleep::remove_initial_player_movement};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnExit(PlayerState::Asleep), restore_player_movement);
+    app.add_systems(
+        OnEnter(PlayerState::Awake),
+        (
+            remove_initial_player_movement,
+        ).chain(),
+    );
 }
 
-
-// Gives player movement when player is awake.
+// Restores player movement when player is awake.
 fn restore_player_movement(
     mut commands: Commands,
     player_query: Query<Entity, With<Player>>,
