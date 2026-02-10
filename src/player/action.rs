@@ -16,7 +16,7 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 
-use crate::{AppSystems, PausableSystems, player::{PlayerState, player::Player}};
+use crate::{AppSystems, PausableSystems, map::teleporter::{self, Teleporter}, player::{PlayerState, player::Player}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -40,6 +40,7 @@ pub enum PlayerAction {
     #[actionlike(DualAxis)]
     Move,
     Honkshoo,
+    Teleport,
 }
 
 impl PlayerAction {
@@ -49,11 +50,13 @@ impl PlayerAction {
         // Default gamepad mapping for movement
         input_map.insert_dual_axis(Self::Move, GamepadStick::LEFT);
         input_map.insert(Self::Honkshoo, GamepadButton::South);
+        input_map.insert(Self::Teleport, GamepadButton::East);
 
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
         input_map.insert_dual_axis(Self::Move, VirtualDPad::arrow_keys());
         input_map.insert(Self::Honkshoo, KeyCode::Space);
+        input_map.insert(Self::Teleport, KeyCode::KeyQ);
         
         input_map
     }
