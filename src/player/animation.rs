@@ -32,6 +32,34 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Component that tracks player's animation state.
+/// It is tightly bound to the texture atlas we use.
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct PlayerAnimation {
+    timer: Timer,
+    frame: usize,
+    state: PlayerAnimationState,
+    facing: FacingDirection,
+    state_changed: bool,
+}
+
+#[derive(Reflect, PartialEq, Component)]
+pub enum PlayerAnimationState {
+    Idling,
+    WalkingSide,
+    WalkingUp,
+    WalkingDown,
+}
+
+#[derive(Reflect, PartialEq, Clone, Copy)]
+pub enum FacingDirection {
+    Side,
+    Up,
+    Down,
+}
+
+
 /// Update the animation timer.
 fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {
     for mut animation in &mut query {
@@ -101,42 +129,22 @@ fn trigger_step_sound_effect(
     }
 }
 
-/// Component that tracks player's animation state.
-/// It is tightly bound to the texture atlas we use.
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct PlayerAnimation {
-    timer: Timer,
-    frame: usize,
-    state: PlayerAnimationState,
-    facing: FacingDirection,
-    state_changed: bool,
-}
-
-#[derive(Reflect, PartialEq)]
-pub enum PlayerAnimationState {
-    Idling,
-    WalkingSide,
-    WalkingUp,
-    WalkingDown,
-}
-
 impl PlayerAnimation {
     /// The number of idle frames.
     const IDLE_FRAMES: usize = 1;
     /// The duration of each idle frame.
-    const IDLE_INTERVAL: Duration = Duration::from_millis(170);
+    const IDLE_INTERVAL: Duration = Duration::from_millis(170); //originally 170, 1000 doing this to see sprite alignment better
     /// The number of walking frames.
     const WALKING_FRAMES: usize = 4;
     /// The duration of each walking frame.
-    const WALKING_INTERVAL: Duration = Duration::from_millis(170);
+    const WALKING_INTERVAL: Duration = Duration::from_millis(170); //originally 170, 1000 doing this to see sprite alignment better
 
-    fn idling() -> Self {
+    fn idling(facing: FacingDirection) -> Self {
         Self {
             timer: Timer::new(Self::IDLE_INTERVAL, TimerMode::Repeating),
             frame: 0,
             state: PlayerAnimationState::Idling,
-            facing: FacingDirection::Down,
+            facing,
             state_changed: true,
         }
     }
@@ -171,8 +179,8 @@ impl PlayerAnimation {
         }
     }
 
-    pub fn new() -> Self {
-        Self::idling()
+    pub fn new(facing: FacingDirection) -> Self {
+        Self::idling(facing)
     }
 
     /// Update animation timers.
@@ -194,7 +202,7 @@ impl PlayerAnimation {
     pub fn update_state(&mut self, state: PlayerAnimationState) {
         if self.state != state {
             *self = match state {
-                PlayerAnimationState::Idling => Self::idling(),
+                PlayerAnimationState::Idling => Self::idling(self.facing),
                 PlayerAnimationState::WalkingSide => Self::walking_side(),
                 PlayerAnimationState::WalkingUp => Self::walking_up(),
                 PlayerAnimationState::WalkingDown => Self::walking_down(),
@@ -216,21 +224,14 @@ impl PlayerAnimation {
         match self.state {
             PlayerAnimationState::Idling => match self.facing {
                 FacingDirection::Side => 0,
-                FacingDirection::Up => 4,
+                FacingDirection::Up => 8,
                 FacingDirection::Down => 4,
             },
-            PlayerAnimationState::Idling => 0 + self.frame,
             PlayerAnimationState::WalkingSide => 0 + self.frame,
-            PlayerAnimationState::WalkingUp => 4 + self.frame,
+            PlayerAnimationState::WalkingUp => 8 + self.frame,
             PlayerAnimationState::WalkingDown => 4 + self.frame,
         }
     }
 }
 
-#[derive(Reflect, PartialEq, Clone, Copy)]
-pub enum FacingDirection {
-    Side,
-    Up,
-    Down,
-}
 

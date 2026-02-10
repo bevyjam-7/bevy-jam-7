@@ -3,7 +3,7 @@
 use bevy::{mesh::RectangleMeshBuilder, prelude::*};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION}, map::teleporter::{create_teleporter_pair, link_teleporters}, player::player::{PlayerAssets, player}, screens::Screen
+    asset_tracking::LoadResource, audio::music, game_consts::{TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION}, map::teleporter::{create_teleporter_pair, link_teleporters}, player::player::{PlayerAssets, player}, screens::Screen, player::animation::FacingDirection,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -57,7 +57,7 @@ pub fn spawn_level(
         Visibility::default(),
         DespawnOnExit(Screen::Gameplay),
         children![
-            player(100.0, &player_assets, &mut texture_atlas_layouts),
+            player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             witch_house_map(&mut meshes, &mut materials),
             (
                 Name::new("Gameplay Music"),
