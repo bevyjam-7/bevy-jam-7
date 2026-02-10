@@ -139,12 +139,12 @@ impl PlayerAnimation {
     /// The duration of each walking frame.
     const WALKING_INTERVAL: Duration = Duration::from_millis(170); //originally 170, 1000 doing this to see sprite alignment better
 
-    fn idling() -> Self {
+    fn idling(facing: FacingDirection) -> Self {
         Self {
             timer: Timer::new(Self::IDLE_INTERVAL, TimerMode::Repeating),
             frame: 0,
             state: PlayerAnimationState::Idling,
-            facing: FacingDirection::Down,
+            facing,
             state_changed: true,
         }
     }
@@ -179,8 +179,8 @@ impl PlayerAnimation {
         }
     }
 
-    pub fn new() -> Self {
-        Self::idling()
+    pub fn new(facing: FacingDirection) -> Self {
+        Self::idling(facing)
     }
 
     /// Update animation timers.
@@ -202,7 +202,7 @@ impl PlayerAnimation {
     pub fn update_state(&mut self, state: PlayerAnimationState) {
         if self.state != state {
             *self = match state {
-                PlayerAnimationState::Idling => Self::idling(),
+                PlayerAnimationState::Idling => Self::idling(self.facing),
                 PlayerAnimationState::WalkingSide => Self::walking_side(),
                 PlayerAnimationState::WalkingUp => Self::walking_up(),
                 PlayerAnimationState::WalkingDown => Self::walking_down(),
@@ -227,7 +227,6 @@ impl PlayerAnimation {
                 FacingDirection::Up => 8,
                 FacingDirection::Down => 4,
             },
-            PlayerAnimationState::Idling => 0 + self.frame,
             PlayerAnimationState::WalkingSide => 0 + self.frame,
             PlayerAnimationState::WalkingUp => 8 + self.frame,
             PlayerAnimationState::WalkingDown => 4 + self.frame,
