@@ -4,13 +4,15 @@ use bevy::{
     image::{ImageLoaderSettings, ImageSampler},
     prelude::*,
 };
-
 use crate::{
-    player::action::MovementController,
+    AppSystems, PausableSystems,
+    asset_tracking::LoadResource,
+    player::action::{MovementController, PlayerAction},
 };
+use super::player_ghost_animation::GhostPlayerAnimation;
 
 pub (super) fn plugin(app: &mut App) {
-    app.init_resource::<GhostPlayerAssets>();
+    app.load_resource::<GhostPlayerAssets>();
 }
 
 pub fn ghost_player(
@@ -21,6 +23,7 @@ pub fn ghost_player(
     // Similar to the player spawn function, but with ghost-specific assets and properties
     let layout = TextureAtlasLayout::from_grid(UVec2::splat(64), 4, 1, Some(UVec2::splat(1)), None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
+    let ghost_player_animation = GhostPlayerAnimation::new();
 
     (
         Name::new("Ghost Player"),
@@ -33,12 +36,14 @@ pub fn ghost_player(
             },
         ),
         Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
+        PlayerAction::default_input_map(),
         MovementController {
             max_speed,
             ..default()
         },
+        ghost_player_animation,
         // Additional components for ghost player behavior can be added here
-    );
+    )
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]

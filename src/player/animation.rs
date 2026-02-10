@@ -32,6 +32,34 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+/// Component that tracks player's animation state.
+/// It is tightly bound to the texture atlas we use.
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct PlayerAnimation {
+    timer: Timer,
+    frame: usize,
+    state: PlayerAnimationState,
+    facing: FacingDirection,
+    state_changed: bool,
+}
+
+#[derive(Reflect, PartialEq, Component)]
+pub enum PlayerAnimationState {
+    Idling,
+    WalkingSide,
+    WalkingUp,
+    WalkingDown,
+}
+
+#[derive(Reflect, PartialEq, Clone, Copy)]
+pub enum FacingDirection {
+    Side,
+    Up,
+    Down,
+}
+
+
 /// Update the animation timer.
 fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {
     for mut animation in &mut query {
@@ -99,26 +127,6 @@ fn trigger_step_sound_effect(
             commands.spawn(sound_effect(random_step));
         }
     }
-}
-
-/// Component that tracks player's animation state.
-/// It is tightly bound to the texture atlas we use.
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-pub struct PlayerAnimation {
-    timer: Timer,
-    frame: usize,
-    state: PlayerAnimationState,
-    facing: FacingDirection,
-    state_changed: bool,
-}
-
-#[derive(Reflect, PartialEq)]
-pub enum PlayerAnimationState {
-    Idling,
-    WalkingSide,
-    WalkingUp,
-    WalkingDown,
 }
 
 impl PlayerAnimation {
@@ -227,10 +235,4 @@ impl PlayerAnimation {
     }
 }
 
-#[derive(Reflect, PartialEq, Clone, Copy)]
-pub enum FacingDirection {
-    Side,
-    Up,
-    Down,
-}
 
