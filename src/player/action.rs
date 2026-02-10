@@ -16,7 +16,7 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 
-use crate::{AppSystems, PausableSystems, map::teleporter::{self, Teleporter}, player::{PlayerState, player::Player}};
+use crate::{AppSystems, PausableSystems, map::teleporter::{self, Teleporter}, player::{PlayerState, player::Player}, player::player_ghost::player_ghost::{GhostPlayer, GhostPlayerAssets}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -28,11 +28,13 @@ pub(super) fn plugin(app: &mut App) {
     );
     
     app.add_systems(Update, 
-        (apply_actions)
+        apply_actions
         .chain()
         .in_set(AppSystems::RecordInput)
         .in_set(PausableSystems)
     );
+
+
 }
 
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Debug, Hash, Reflect)]
@@ -65,9 +67,9 @@ impl PlayerAction {
 }
 
 fn apply_actions(
-    mut player_state: ResMut<State<PlayerState>>,
+    player_state: ResMut<State<PlayerState>>,
     mut next_player_state: ResMut<NextState<PlayerState>>,
-    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController), With<Player>>,
+    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController), Or<(With<Player>, With<GhostPlayer>)>>,
 ) {
     for (action_state, mut controller) in action_query.iter_mut() {
         // Set movement intent based on input actions, which are normalized to length 1.
@@ -78,12 +80,16 @@ fn apply_actions(
         if action_state.just_pressed(&PlayerAction::Honkshoo) {
             if player_state.get() == &PlayerState::Awake {
                 next_player_state.set(PlayerState::Asleep);
+                println!("\nAsleep state applied")
             } else {
                 next_player_state.set(PlayerState::Awake);
+                print!("\nAwake state applied")
             }
-        }
+        }// Add these components to enable input handling:
+        ActionState::<PlayerAction>::default();
     }
 }
+
 
 fn apply_movement(
     time: Res<Time>,
@@ -94,8 +100,6 @@ fn apply_movement(
         transform.translation += velocity.extend(0.0) * time.delta_secs();
     }
 }
-
-
 
 /// These are the movement parameters for our character controller.
 /// For now, this is only used for a single player, but it could power NPCs or
