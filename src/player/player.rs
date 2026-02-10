@@ -21,6 +21,9 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
 }
 
+#[derive(EntityEvent)]
+struct PickupEvent(Entity);
+
 /// The player character.
 pub fn player(
     max_speed: f32,
@@ -34,6 +37,7 @@ pub fn player(
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new(facing);
 
+    
     (
         Name::new("Player"),
         Player,

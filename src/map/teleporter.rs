@@ -21,6 +21,60 @@ pub struct Teleporter {
     pub can_teleport: bool,
 }
 
+#[derive(Component, Debug, Reflect)]
+struct Teleportable {
+    on_teleporter: Teleporter,
+}
+
+#[derive(EntityEvent)]
+struct TeleportEvent(Entity);
+
+fn link_object_to_tp(
+    mut entity: Entity,
+    mut teleporter: Teleporter,
+    mut commands: Commands,
+) {
+    if teleporter.containing_entity != Entity::PLACEHOLDER {
+        info!("Teleporter is already occupied, cannot link object.");
+        return; // Teleporter is already occupied.
+    }
+    commands.entity(entity)
+        .insert(Teleportable { on_teleporter: teleporter });
+    teleporter.set_containing_entity(entity);
+}
+
+fn unlink_object_from_tp(
+    mut entity: Entity,
+    mut teleporter: Teleporter,
+    mut commands: Commands,
+) {
+    if teleporter.containing_entity == Entity::PLACEHOLDER {
+        info!("Entity is not on this teleporter, cannot unlink.");
+        return; // Entity is not on this teleporter.
+    }
+    commands.entity(entity)
+        .remove::<Teleportable>();
+    teleporter.set_containing_entity(Entity::PLACEHOLDER);
+}
+
+// fn teleport_entity(
+//     entity_to_tp: On<TeleportEvent>,
+//     mut teleporter_query: Query<&mut Teleporter>,
+//     mut commands: Commands,
+// ) {
+//     let Ok(mut object) = commands.get_entity(entity_to_tp.0) else {
+//         return;
+//     };
+
+//     let Ok(mut teleporter) = teleporter_query.get_mut(object.) else {
+//         return;
+//     };
+
+//     let current_teleporter = teleportable_component.on_teleporter;
+
+
+// }
+
 /// Query if player is near a teleporter
 fn player_near_teleporter(
     player_state: Res<State<PlayerState>>,
@@ -44,32 +98,32 @@ fn player_near_teleporter(
 
 impl Teleporter {
     /// Teleports the containing entity to the teleporter's buddy's location.
-    // pub fn teleport(
-    //     &mut self, commands: &mut Commands, 
-    //     mut teleporter_query: Query<(&Transform, &mut Teleporter)>
-    // ) {
-    //     if self.containing_entity == Entity::PLACEHOLDER && self.can_teleport {
-    //         info!("Teleporter has no containing entity or cannot teleport.");
-    //         return; // No entity to teleport.
-    //     }
-    //     let Ok((buddy_transform, mut buddy_teleporter)) = teleporter_query.get_mut(self.tele_buddy) else {
-    //         info!("Buddy teleporter doesn't exist.");
-    //         return; // Buddy teleporter doesn't exist.
-    //     };
-    //     // Check if buddy teleporter is currently occupied, if so, do not teleport.
-    //     if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
-    //         info!("Buddy teleporter is currently occupied, cannot teleport.");
-    //         return; // Buddy teleporter is currently occupied.
-    //     }
-    //     let teleporter_item = self.containing_entity;
-    //     // Clear self's containing entity
-    //     self.containing_entity = Entity::PLACEHOLDER;
-    //     commands.entity(teleporter_item)
-    //         .insert(Transform::from_translation(buddy_transform.translation));
+    pub fn teleport(
+        &mut self, commands: &mut Commands, 
+        mut teleporter_query: Query<(&Transform, &mut Teleporter)>
+    ) {
+        if self.containing_entity == Entity::PLACEHOLDER && self.can_teleport {
+            info!("Teleporter has no containing entity or cannot teleport.");
+            return; // No entity to teleport.
+        }
+        let Ok((buddy_transform, mut buddy_teleporter)) = teleporter_query.get_mut(self.tele_buddy) else {
+            info!("Buddy teleporter doesn't exist.");
+            return; // Buddy teleporter doesn't exist.
+        };
+        // Check if buddy teleporter is currently occupied, if so, do not teleport.
+        if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
+            info!("Buddy teleporter is currently occupied, cannot teleport.");
+            return; // Buddy teleporter is currently occupied.
+        }
+        let teleporter_item = self.containing_entity;
+        // Clear self's containing entity
+        self.containing_entity = Entity::PLACEHOLDER;
+        commands.entity(teleporter_item)
+            .insert(Transform::from_translation(buddy_transform.translation));
 
-    //     // Update the buddy teleporter's containing entity.
-    //     buddy_teleporter.set_containing_entity(teleporter_item);
-    // }
+        // Update the buddy teleporter's containing entity.
+        buddy_teleporter.set_containing_entity(teleporter_item);
+    }
 
     /// Sets the containing entity of the teleporter.
     fn set_containing_entity(&mut self, entity: Entity) {

@@ -59,6 +59,11 @@ pub fn spawn_level(
         children![
             player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             witch_house_map(&mut meshes, &mut materials),
+            // spawn_pickable(
+            //     Vec3::new(0., 0., 0.), 
+            //     meshes.add(Rectangle::new(30., 30.)), 
+            //     materials.add(ColorMaterial::from(Color::BLACK))
+            // ),
             (
                 Name::new("Gameplay Music"),
                 music(level_assets.music.clone())
@@ -74,7 +79,6 @@ pub fn witch_house_map(
 ) -> impl Bundle {
     let house_mesh = meshes.add(Rectangle::new(800., 400.));
     let house_material = materials.add(ColorMaterial::from(Color::WHITE));
-
     (
         Name::new("Witch House"),
         WitchHouse,

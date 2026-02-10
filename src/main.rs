@@ -13,6 +13,7 @@ mod screens;
 mod theme;
 mod map;
 pub mod game_consts;
+mod inventory;
 
 use bevy::{asset::AssetMetaCheck, camera::CameraProjection, prelude::*};
 
@@ -56,6 +57,7 @@ impl Plugin for AppPlugin {
             screens::plugin,
             theme::plugin,
             map::plugin,
+            inventory::plugin,
         ));
 
         // Order new `AppSystems` variants by adding them here:
