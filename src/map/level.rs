@@ -57,7 +57,7 @@ pub fn spawn_level(
         Visibility::default(),
         DespawnOnExit(Screen::Gameplay),
         children![
-            player(100.0, &player_assets, &mut texture_atlas_layouts),
+            player(100.0, &player_assets, &mut texture_atlas_layouts), // original speed was 100.0, 0.0 to see sprite alignment better
             witch_house_map(&mut meshes, &mut materials),
             (
                 Name::new("Gameplay Music"),

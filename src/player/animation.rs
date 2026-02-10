@@ -133,11 +133,11 @@ impl PlayerAnimation {
     /// The number of idle frames.
     const IDLE_FRAMES: usize = 1;
     /// The duration of each idle frame.
-    const IDLE_INTERVAL: Duration = Duration::from_millis(170);
+    const IDLE_INTERVAL: Duration = Duration::from_millis(170); //originally 170, 1000 doing this to see sprite alignment better
     /// The number of walking frames.
     const WALKING_FRAMES: usize = 4;
     /// The duration of each walking frame.
-    const WALKING_INTERVAL: Duration = Duration::from_millis(170);
+    const WALKING_INTERVAL: Duration = Duration::from_millis(170); //originally 170, 1000 doing this to see sprite alignment better
 
     fn idling() -> Self {
         Self {
@@ -224,12 +224,12 @@ impl PlayerAnimation {
         match self.state {
             PlayerAnimationState::Idling => match self.facing {
                 FacingDirection::Side => 0,
-                FacingDirection::Up => 4,
+                FacingDirection::Up => 8,
                 FacingDirection::Down => 4,
             },
             PlayerAnimationState::Idling => 0 + self.frame,
             PlayerAnimationState::WalkingSide => 0 + self.frame,
-            PlayerAnimationState::WalkingUp => 4 + self.frame,
+            PlayerAnimationState::WalkingUp => 8 + self.frame,
             PlayerAnimationState::WalkingDown => 4 + self.frame,
         }
     }
