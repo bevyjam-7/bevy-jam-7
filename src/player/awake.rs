@@ -1,14 +1,21 @@
 use bevy::prelude::*;
 
-use crate::player::{PlayerState, action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer,asleep::remove_initial_player_movement};
+use crate::player::{PlayerState, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::GhostPlayer};
+use::leafwing_input_manager::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(
-        OnEnter(PlayerState::Awake),
-        (
-            remove_initial_player_movement,
-        ).chain(),
-    );
+    app.add_systems(OnEnter(PlayerState::Awake), despawn_ghost_player);
+    app.add_systems(OnEnter(PlayerState::Awake), restore_player_movement.after(despawn_ghost_player));
+}
+
+// Despawn ghost player
+fn despawn_ghost_player(
+    mut commands: Commands,
+    ghost_player_query: Query<Entity, With<GhostPlayer>>,
+) {
+    for entity in &ghost_player_query {
+        commands.entity(entity).despawn();
+    }
 }
 
 // Restores player movement when player is awake.
@@ -18,9 +25,15 @@ fn restore_player_movement(
 ) {
     for entity in &player_query {
         commands.entity(entity)
-            .insert(MovementController {
-                max_speed: 400.0,
-                ..default()
-            });
+            .insert((
+                MovementController {
+                    max_speed: 100.0,
+                    ..default()
+                },
+
+                ActionState::<PlayerAction>::default(),
+                PlayerAction::default_input_map(),
+            ));
     }
+    println!("\nRestored movement and input to player");
 }

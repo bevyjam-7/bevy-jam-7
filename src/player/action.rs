@@ -16,7 +16,7 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 
-use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::handle_pickups}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::Player, player_ghost::player_ghost::{GhostPlayer, GhostPlayerAssets}}};
+use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::handle_pickups}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::Player, player_ghost::player_ghost::GhostPlayer, player::ActionTimer}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -86,15 +86,18 @@ fn pick_up_item_action(
 fn apply_actions(
     player_state: ResMut<State<PlayerState>>,
     mut next_player_state: ResMut<NextState<PlayerState>>,
-    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController), Or<(With<Player>, With<GhostPlayer>)>>,
+    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController, &mut ActionTimer), Or<(With<Player>, With<GhostPlayer>)>>,
+    time: Res<Time>,
 ) {
-    for (action_state, mut controller) in action_query.iter_mut() {
+    for (action_state, mut controller, mut action_timer) in action_query.iter_mut() {
         // Set movement intent based on input actions, which are normalized to length 1.
         // If no input is pressed, this will be the zero vector.
         controller.intent = action_state.axis_pair(&PlayerAction::Move).normalize_or_zero();
 
+        action_timer.timer.tick(time.delta());
+
         // Other actions can be handled here as well.
-        if action_state.just_pressed(&PlayerAction::Honkshoo) {
+        if action_state.just_pressed(&PlayerAction::Honkshoo) && action_timer.timer.is_finished() {
             if player_state.get() == &PlayerState::Awake {
                 next_player_state.set(PlayerState::Asleep);
                 println!("\nAsleep state applied")
@@ -102,6 +105,7 @@ fn apply_actions(
                 next_player_state.set(PlayerState::Awake);
                 print!("\nAwake state applied")
             }
+            action_timer.timer.reset();
         }// Add these components to enable input handling:
         ActionState::<PlayerAction>::default();
 

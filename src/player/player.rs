@@ -50,6 +50,9 @@ pub fn player(
         ),
         Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
         PlayerAction::default_input_map(),
+        ActionTimer {
+            timer: Timer::from_seconds(0.5, TimerMode::Once)
+        },
         MovementController {
             max_speed,
             ..default()
@@ -69,6 +72,11 @@ pub struct PlayerAssets {
     ducky: Handle<Image>,
     #[dependency]
     pub steps: Vec<Handle<AudioSource>>,
+}
+
+#[derive(Component)]
+pub struct ActionTimer{
+    pub timer: Timer
 }
 
 impl FromWorld for PlayerAssets {

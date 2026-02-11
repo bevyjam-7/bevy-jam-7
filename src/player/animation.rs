@@ -61,7 +61,7 @@ pub enum FacingDirection {
 
 
 /// Update the animation timer.
-fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {
+fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation, With<MovementController>>) {
     for mut animation in &mut query {
         animation.update_timer(time.delta());
     }
@@ -115,7 +115,7 @@ fn update_animation_atlas(mut query: Query<(&mut PlayerAnimation, &mut Sprite)>)
 fn trigger_step_sound_effect(
     mut commands: Commands,
     player_assets: If<Res<PlayerAssets>>,
-    mut step_query: Query<&mut PlayerAnimation>,
+    mut step_query: Query<&mut PlayerAnimation, With<MovementController>>,
 ) {
     for mut animation in &mut step_query {
         if (animation.state == PlayerAnimationState::WalkingSide || animation.state == PlayerAnimationState::WalkingUp || animation.state == PlayerAnimationState::WalkingDown)

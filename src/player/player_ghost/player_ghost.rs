@@ -8,6 +8,7 @@ use crate::{
     AppSystems, PausableSystems,
     asset_tracking::LoadResource,
     player::action::{MovementController, PlayerAction},
+    player::player::ActionTimer,
 };
 use super::player_ghost_animation::GhostPlayerAnimation;
 
@@ -37,6 +38,9 @@ pub fn ghost_player(
         ),
         Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
         PlayerAction::default_input_map(),
+        ActionTimer {
+            timer: Timer::from_seconds(0.5, TimerMode::Once)
+        },
         MovementController {
             max_speed,
             ..default()
@@ -49,6 +53,7 @@ pub fn ghost_player(
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
 pub struct GhostPlayer;
+
 
 #[derive(Resource, Asset, Clone, Reflect)]
 #[reflect(Resource)]

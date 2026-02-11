@@ -1,6 +1,6 @@
 use bevy::{ecs::system::entity_command::insert, prelude::*};
 
-use crate::player::{PlayerState, player_ghost::player_ghost::GhostPlayer, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}};
+use crate::player::{PlayerState, player_ghost::player_ghost::GhostPlayer, animation::{PlayerAnimation, PlayerAnimationState}, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}};
 use leafwing_input_manager::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
@@ -8,6 +8,7 @@ pub(super) fn plugin(app: &mut App) {
         OnEnter(PlayerState::Asleep),
         (
             remove_initial_player_movement,
+            reset_player_animation_to_idle,
             spawn_ghost_player,
         ).chain(),
     );
@@ -16,7 +17,7 @@ pub(super) fn plugin(app: &mut App) {
 // Take movement away from original player
 pub fn remove_initial_player_movement(
     mut commands: Commands,
-    player_query: Query<Entity, Or<(With<Player>, With<GhostPlayer>)>>,
+    player_query: Query<Entity, With<Player>>,
 ) {
     for entity in &player_query {
         commands.entity(entity)
@@ -35,11 +36,22 @@ fn spawn_ghost_player(
 ) {
     commands.spawn((
         ghost_player(
-            200.0,
+            100.0,
             ghost_player_assets,
             texture_atlas_layouts,
         ),
     ));
     
     println!("\nSpawned ghost player with input controls");
+}
+
+// Reset player animation to idle when falling asleep
+fn reset_player_animation_to_idle(
+    mut player_query: Query<&mut PlayerAnimation, With<Player>>,
+) {
+    for mut animation in &mut player_query {
+        // Reset to idle state while preserving the facing direction
+        animation.update_state(PlayerAnimationState::Idling);
+        println!("\nReset player animation to idle (asleep)");
+    }
 }
