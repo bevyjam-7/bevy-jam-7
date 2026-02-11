@@ -35,6 +35,7 @@ pub fn ghost_player(
                 layout: texture_atlas_layout,
                 index:0,
             },
+            
         ),
         Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
         PlayerAction::default_input_map(),

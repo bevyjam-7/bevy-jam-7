@@ -1,6 +1,6 @@
 use bevy::{ecs::system::entity_command::insert, prelude::*};
 
-use crate::player::{PlayerState, player_ghost::player_ghost::GhostPlayer, animation::{PlayerAnimation, PlayerAnimationState}, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}};
+use crate::player::{PlayerState, animation::{PlayerAnimation, PlayerAnimationState}, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}};
 use leafwing_input_manager::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
@@ -33,14 +33,22 @@ fn spawn_ghost_player(
     mut commands: Commands,
     ghost_player_assets: Res<GhostPlayerAssets>,
     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    player_query: Query<&Transform, With<Player>>,
 ) {
-    commands.spawn((
+    let mut entity_commands = commands.spawn((
         ghost_player(
-            100.0,
+            100.0,    // originally 100 
             ghost_player_assets,
             texture_atlas_layouts,
         ),
     ));
+
+    // Override the Transfrom component
+    if let Ok(player_transform) = player_query.single() {
+        let mut ghost_transform = *player_transform;
+        ghost_transform.translation.z += 1.0; // Spawn one layer above the player
+        entity_commands.insert(ghost_transform);
+    }
     
     println!("\nSpawned ghost player with input controls");
 }
