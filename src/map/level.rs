@@ -3,7 +3,7 @@
 use bevy::{mesh::RectangleMeshBuilder, prelude::*};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION}, map::teleporter::{create_teleporter_pair, link_teleporters}, player::player::{PlayerAssets, player}, screens::Screen, player::animation::FacingDirection,
+    asset_tracking::LoadResource, audio::music, game_consts::{TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION}, inventory::inventory::ItemKind, map::{object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -59,11 +59,12 @@ pub fn spawn_level(
         children![
             player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             witch_house_map(&mut meshes, &mut materials),
-            // spawn_pickable(
-            //     Vec3::new(0., 0., 0.), 
-            //     meshes.add(Rectangle::new(30., 30.)), 
-            //     materials.add(ColorMaterial::from(Color::BLACK))
-            // ),
+            spawn_object(
+                ItemKind::Food1, // Bread
+                Vec3::new(0., 100., 1.), 
+                meshes.add(Rectangle::new(30., 20.)), 
+                materials.add(ColorMaterial::from(Color::BLACK))
+            ),
             (
                 Name::new("Gameplay Music"),
                 music(level_assets.music.clone())

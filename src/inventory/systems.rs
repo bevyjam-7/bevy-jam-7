@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{inventory::inventory::{Inventory, ObjectPickable}, player::player::Player};
 
 pub(super) fn plugin(app: &mut App) {
-    app;
+
 }
 
 #[derive(EntityEvent)]

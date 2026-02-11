@@ -21,14 +21,14 @@ use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, Obje
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (apply_movement, pick_up_item_action)
+        apply_movement
             .chain()
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
     );
     
     app.add_systems(Update, 
-        apply_actions
+        (apply_actions, pick_up_item_action)
         .chain()
         .in_set(AppSystems::RecordInput)
         .in_set(PausableSystems)
@@ -107,9 +107,7 @@ fn apply_actions(
 
         if action_state.just_pressed(&PlayerAction::Pickup) {
             info!("Pickup button pressed");
-            // If player is on a pickable item, pick it up.
-            // If player is already holding an item, drop it.
-
+            
         }
 
         if action_state.just_pressed(&PlayerAction::Teleport) {
