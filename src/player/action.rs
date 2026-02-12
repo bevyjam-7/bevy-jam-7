@@ -16,19 +16,19 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 
-use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::handle_pickups}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::Player, player_ghost::player_ghost::GhostPlayer, player::ActionTimer}};
+use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer, GhostPlayerAssets}}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (apply_movement, pick_up_item_action)
+        apply_movement
             .chain()
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
     );
     
     app.add_systems(Update, 
-        apply_actions
+        (apply_actions, pick_up_item_action, drop_item_action)
         .chain()
         .in_set(AppSystems::RecordInput)
         .in_set(PausableSystems)
@@ -44,6 +44,7 @@ pub enum PlayerAction {
     Honkshoo,
     Teleport,
     Pickup,
+    Drop,
 }
 
 impl PlayerAction {
@@ -55,6 +56,7 @@ impl PlayerAction {
         input_map.insert(Self::Honkshoo, GamepadButton::South);
         input_map.insert(Self::Teleport, GamepadButton::East);
         input_map.insert(Self::Pickup, GamepadButton::West);
+        input_map.insert(Self::Drop, GamepadButton::North);
 
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
@@ -62,6 +64,7 @@ impl PlayerAction {
         input_map.insert(Self::Honkshoo, KeyCode::Space);
         input_map.insert(Self::Teleport, KeyCode::KeyQ);
         input_map.insert(Self::Pickup, KeyCode::KeyE);
+        input_map.insert(Self::Drop, KeyCode::KeyF);
         
         input_map
     }
@@ -69,12 +72,28 @@ impl PlayerAction {
     
 }
 
+fn drop_item_action(
+    commands: Commands,
+    inventory: ResMut<Inventory>,
+    player_query: Query<&Transform, With<Player>>,
+    action_query: Query<&ActionState<PlayerAction>, With<Player>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    if let Ok(action_state) = action_query.single() {
+        if action_state.just_pressed(&PlayerAction::Drop) {
+            drop_item(commands, inventory, player_query, meshes, materials);
+        }
+    }
+}
+
+
 fn pick_up_item_action(
-    mut commands: Commands,
-    mut inventory: ResMut<Inventory>,
+    commands: Commands,
+    inventory: ResMut<Inventory>,
     player_query: Query<&Transform, With<Player>>,
     pickables: Query<(Entity, &GlobalTransform, &ObjectPickable)>,
-    mut action_query: Query<&ActionState<PlayerAction>, With<Player>>,
+    action_query: Query<&ActionState<PlayerAction>, With<Player>>,
 ) {
     if let Ok(action_state) = action_query.single() {
         if action_state.just_pressed(&PlayerAction::Pickup) {
@@ -119,26 +138,8 @@ fn apply_actions(
                 
             }
             action_timer.timer.reset();
-        }
-
-        if action_state.just_pressed(&PlayerAction::Pickup) {
-            info!("Pickup button pressed");
-            // If player is on a pickable item, pick it up.
-            // If player is already holding an item, drop it.
-
-        }
-
-        if action_state.just_pressed(&PlayerAction::Teleport) {
-            info!("Teleport button pressed");
-            // If player is holding an item, place the item down onto the teleporter.
-            // If player is not holding an item and is on a teleporter, pick the item up.
-
-            // fn place_item_on_tp() 
-
-            // If player is in astral form, they are unable to pick up item
-            // If in astral form, player is able to teleport the linked item.
-            
-        }
+        }// Add these components to enable input handling:
+        // ActionState::<PlayerAction>::default();
     }
 }
 

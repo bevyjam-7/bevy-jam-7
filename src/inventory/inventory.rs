@@ -55,6 +55,28 @@ impl Inventory {
         *entry
     }
 
+    /// Remove an item from the inventory, returns new count
+    pub fn remove(&mut self, kind: ItemKind) {
+        // get the count for the item, decrement it, and remove it if the count reaches zero
+        if let Some(count) = self.items.get_mut(&kind) {
+            if *count > 0 {
+                *count -= 1;
+                if *count == 0 {
+                    self.items.remove(&kind);
+                }
+            }
+        }
+    }
+    
+    /// Get the item type
+    pub fn get(&self, kind: ItemKind) -> Option<ItemKind> {
+        if self.items.contains_key(&kind) {
+            Some(kind)
+        } else {
+            None
+        }
+    }
+
     /// Get a summary string of inventory contents.
     pub fn summary(&self) -> String {
         if self.items.is_empty() {
