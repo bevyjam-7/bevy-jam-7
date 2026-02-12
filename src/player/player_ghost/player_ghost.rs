@@ -37,7 +37,7 @@ pub fn ghost_player(
             },
             
         ),
-        Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
+        Transform::from_scale(Vec2::splat(1.0).extend(1.0)),
         PlayerAction::default_input_map(),
         ActionTimer {
             timer: Timer::from_seconds(0.5, TimerMode::Once)

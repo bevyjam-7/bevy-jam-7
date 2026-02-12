@@ -33,24 +33,20 @@ fn spawn_ghost_player(
     mut commands: Commands,
     ghost_player_assets: Res<GhostPlayerAssets>,
     texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<Entity, With<Player>>,
 ) {
-    let mut entity_commands = commands.spawn((
-        ghost_player(
-            100.0,    // originally 100 
-            ghost_player_assets,
-            texture_atlas_layouts,
-        ),
-    ));
-
-    // Override the Transfrom component
-    if let Ok(player_transform) = player_query.single() {
-        let mut ghost_transform = *player_transform;
-        ghost_transform.translation.z += 1.0; // Spawn one layer above the player
-        entity_commands.insert(ghost_transform);
+    if let Ok(player_entity) = player_query.single() {
+        commands.entity(player_entity).with_children(|parent| {
+            parent.spawn((
+                ghost_player(
+                    50.0,
+                    ghost_player_assets,
+                    texture_atlas_layouts,
+                ), // Local offset from parent
+            ));
+        });
+        println!("\nSpawned ghost player as child of main player");
     }
-    
-    println!("\nSpawned ghost player with input controls");
 }
 
 // Reset player animation to idle when falling asleep

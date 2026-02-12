@@ -15,8 +15,9 @@
 
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
-
+use crate::screens::Screen::Gameplay;
 use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer, GhostPlayerAssets}}};
+
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -34,7 +35,7 @@ pub(super) fn plugin(app: &mut App) {
         .in_set(PausableSystems)
     );
 
-
+    app.add_systems(OnExit(Gameplay), (force_awake_state, reset_action_timer));
 }
 
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Debug, Hash, Reflect)]
@@ -106,8 +107,8 @@ fn apply_actions(
     player_state: ResMut<State<PlayerState>>,
     mut next_player_state: ResMut<NextState<PlayerState>>,
     mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController, &mut ActionTimer), Or<(With<Player>, With<GhostPlayer>)>>,
-    player_query: Query<&Transform, (With<Player>, Without<GhostPlayer>)>,
-    ghost_query: Query<&Transform, (With<GhostPlayer>, Without<Player>)>,
+    player_query: Query<&GlobalTransform, (With<Player>, Without<GhostPlayer>)>,
+    ghost_query: Query<&GlobalTransform, (With<GhostPlayer>, Without<Player>)>,
     time: Res<Time>,
 ) {
     const WAKE_UP_DISTANCE: f32 = 50.0;
@@ -126,7 +127,7 @@ fn apply_actions(
                 println!("\nAsleep state applied")
             } else if player_state.get() == &PlayerState::Asleep {
                 if let (Ok(player_transform), Ok(ghost_transform)) = (player_query.single(), ghost_query.single()) {
-                    let distance = player_transform.translation.distance(ghost_transform.translation);
+                    let distance = player_transform.translation().distance(ghost_transform.translation());
 
                     if distance <= WAKE_UP_DISTANCE {
                         next_player_state.set(PlayerState::Awake);
@@ -135,7 +136,10 @@ fn apply_actions(
                         println!("\nToo far from ghost to wake up!");
                     }
                 }
-                
+                else {
+                    println!("\nGhost not found - waking up anyway");
+                    next_player_state.set(PlayerState::Awake);
+                }
             }
             action_timer.timer.reset();
         }// Add these components to enable input handling:
@@ -154,6 +158,24 @@ fn apply_movement(
     }
 }
 
+// Force player to Awake state when exiting gameplay
+fn force_awake_state(
+    mut next_player_state: ResMut<NextState<PlayerState>>,
+) {
+    next_player_state.set(PlayerState::Awake);
+    println!("\nForced player state to Awake on exit");
+}
+
+// resets action timer when exiting gameplay
+fn reset_action_timer(
+    mut timer_query: Query<&mut ActionTimer, With<Player>>,
+) {
+    for mut action_timer in &mut timer_query {
+        // Set the timer as finished by setting elapsed time to duration
+        let duration = action_timer.timer.duration();
+        action_timer.timer.set_elapsed(duration);
+    }
+}
 /// These are the movement parameters for our character controller.
 /// For now, this is only used for a single player, but it could power NPCs or
 /// other players as well.
