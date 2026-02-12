@@ -87,8 +87,12 @@ fn apply_actions(
     player_state: ResMut<State<PlayerState>>,
     mut next_player_state: ResMut<NextState<PlayerState>>,
     mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController, &mut ActionTimer), Or<(With<Player>, With<GhostPlayer>)>>,
+    player_query: Query<&Transform, (With<Player>, Without<GhostPlayer>)>,
+    ghost_query: Query<&Transform, (With<GhostPlayer>, Without<Player>)>,
     time: Res<Time>,
 ) {
+    const WAKE_UP_DISTANCE: f32 = 50.0;
+
     for (action_state, mut controller, mut action_timer) in action_query.iter_mut() {
         // Set movement intent based on input actions, which are normalized to length 1.
         // If no input is pressed, this will be the zero vector.
@@ -101,13 +105,21 @@ fn apply_actions(
             if player_state.get() == &PlayerState::Awake {
                 next_player_state.set(PlayerState::Asleep);
                 println!("\nAsleep state applied")
-            } else {
-                next_player_state.set(PlayerState::Awake);
-                print!("\nAwake state applied")
+            } else if player_state.get() == &PlayerState::Asleep {
+                if let (Ok(player_transform), Ok(ghost_transform)) = (player_query.single(), ghost_query.single()) {
+                    let distance = player_transform.translation.distance(ghost_transform.translation);
+
+                    if distance <= WAKE_UP_DISTANCE {
+                        next_player_state.set(PlayerState::Awake);
+                        print!("\nAwake state applied")
+                    } else {
+                        println!("\nToo far from ghost to wake up!");
+                    }
+                }
+                
             }
             action_timer.timer.reset();
-        }// Add these components to enable input handling:
-        ActionState::<PlayerAction>::default();
+        }
 
         if action_state.just_pressed(&PlayerAction::Pickup) {
             info!("Pickup button pressed");

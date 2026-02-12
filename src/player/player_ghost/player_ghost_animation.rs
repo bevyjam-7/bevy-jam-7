@@ -210,11 +210,6 @@ impl GhostPlayerAnimation {
     /// Return sprite index in the atlas.
     pub fn get_atlas_index(&self) -> usize {
         match self.state {
-            GhostPlayerAnimationState::FloatingIdling => match self.facing {
-                GhostFacingDirection::Side => 0,
-                GhostFacingDirection::Up => 0,
-                GhostFacingDirection::Down => 0,
-            },
             GhostPlayerAnimationState::FloatingIdling => 0 + self.frame,
             GhostPlayerAnimationState::FloatingSide => 0 + self.frame,
             GhostPlayerAnimationState::FloatingUp => 0 + self.frame,
