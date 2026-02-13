@@ -1,13 +1,14 @@
 //! Spawn the main level.
 
-use bevy::{mesh::RectangleMeshBuilder, prelude::*};
+use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION}, map::{object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
+    asset_tracking::LoadResource, audio::music, game_consts::{TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.load_resource::<LevelAssets>();
+    app.load_resource::<MapAssets>();
 }
 
 #[derive(Resource, Asset, Clone, Reflect)]
@@ -31,6 +32,7 @@ pub fn spawn_level(
     mut commands: Commands,
     level_assets: Res<LevelAssets>,
     player_assets: Res<PlayerAssets>,
+    map_assets: Res<MapAssets>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -58,7 +60,7 @@ pub fn spawn_level(
         DespawnOnExit(Screen::Gameplay),
         children![
             player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
-            witch_house_map(&mut meshes, &mut materials),
+            witch_house_map(&map_assets, &mut texture_atlas_layouts),
             spawn_object(
                 crate::inventory::inventory::ItemKind::Food1,
                 Vec3::new(0., 200., 0.),
@@ -75,19 +77,63 @@ pub fn spawn_level(
 
 /// A square entity that will be the background of the level
 pub fn witch_house_map(
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
+    map_assets: &MapAssets,
+    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
 ) -> impl Bundle {
-    let house_mesh = meshes.add(Rectangle::new(800., 400.));
-    let house_material = materials.add(ColorMaterial::from(Color::WHITE));
+    let layout = TextureAtlasLayout::from_grid(UVec2::new(256, 320), WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, None, None);
+    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+    let house_animation = HouseAnimation::new();
     (
         Name::new("Witch House"),
         WitchHouse,
-        Mesh2d(house_mesh),
-        MeshMaterial2d(house_material),
+        Sprite::from_atlas_image(
+            map_assets.witch_house.clone(), 
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: 0,
+            }
+        ),
+        // make map twice the normal size
+        Transform::from_scale(Vec2::splat(2.0).extend(0.0)),
+        house_animation
     )
 }
+
+pub fn bridge_section_map(
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+) -> impl Bundle {
+    let bridge_mesh = meshes.add(Rectangle::new(400., 100.));
+    let bridge_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.)));
+    (
+        Name::new("Bridge Section"),
+        Mesh2d(bridge_mesh),
+        MeshMaterial2d(bridge_material),
+    )
+}
+
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
 struct WitchHouse;
+
+#[derive(Resource, Asset, Clone, Reflect)]
+#[reflect(Resource)]
+pub struct MapAssets {
+    #[dependency]
+    witch_house: Handle<Image>,
+}
+
+impl FromWorld for MapAssets {
+    fn from_world(world: &mut World) -> Self {
+        let assets = world.resource::<AssetServer>();
+        MapAssets {
+            witch_house: assets.load_with_settings(
+                "images/witch_house.png",
+                |settings: &mut ImageLoaderSettings| {
+                    settings.sampler = ImageSampler::nearest();
+                }
+            ),
+        }
+    }
+}

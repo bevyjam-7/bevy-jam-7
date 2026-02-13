@@ -1,5 +1,9 @@
 use bevy::prelude::*;
 
+// Map related constants
+pub const WITCH_HOUSE_ATLAS_COLS: u32 = 15;
+pub const WITCH_HOUSE_ATLAS_ROWS: u32 = 1;
+
 // Player related constants
 pub const PLAYER_ATLAS_COLS: usize = 4;
 pub const PLAYER_ATLAS_ROWS: usize = 2;
