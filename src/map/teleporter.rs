@@ -141,7 +141,7 @@ pub fn create_teleporter_pair(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ) -> (impl Bundle, impl Bundle) {
-    let teleporter_mesh = &meshes.add(Rectangle::new(50., 50.));
+    let teleporter_mesh = &meshes.add(Rectangle::new(200., 200.));
     let teleporter_material = materials.add(ColorMaterial::from(Color::BLACK));
     let teleporter_a = (
         Name::new("Teleporter A"),

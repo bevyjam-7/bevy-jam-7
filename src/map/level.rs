@@ -3,7 +3,7 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
+    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -60,6 +60,7 @@ pub fn spawn_level(
         DespawnOnExit(Screen::Gameplay),
         children![
             witch_house_map(&map_assets, &mut texture_atlas_layouts),
+            bridge_section_map(&mut meshes, &mut materials),
             player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             spawn_object(
                 crate::inventory::inventory::ItemKind::Food1,
@@ -67,6 +68,7 @@ pub fn spawn_level(
                 meshes.add(Rectangle::new(30., 20.)),
                 materials.add(ColorMaterial::from(Color::BLACK)),
             ),
+            
             (
                 Name::new("Gameplay Music"),
                 music(level_assets.music.clone())
@@ -80,7 +82,7 @@ pub fn witch_house_map(
     map_assets: &MapAssets,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
 ) -> impl Bundle {
-    let layout = TextureAtlasLayout::from_grid(UVec2::new(256, 320), WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, None, None);
+    let layout = TextureAtlasLayout::from_grid(SCENE_TILE_SIZES, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let house_animation = HouseAnimation::new();
     (
@@ -103,12 +105,18 @@ pub fn bridge_section_map(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ) -> impl Bundle {
-    let bridge_mesh = meshes.add(Rectangle::new(400., 100.));
+    let bridge_mesh = meshes.add(Rectangle::new(SCENE_TILE_SIZES.x as f32, SCENE_TILE_SIZES.y as f32));
     let bridge_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.)));
     (
         Name::new("Bridge Section"),
         Mesh2d(bridge_mesh),
         MeshMaterial2d(bridge_material),
+        Transform {
+            // make map twice the normal size
+            scale: Vec2::splat(2.0).extend(0.0),
+            translation: BRIDGE_SECTION_LOCATION,
+            ..default()
+        }
     )
 }
 

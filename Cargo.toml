@@ -18,6 +18,7 @@ tracing = { version = "0.1", features = [
 ] }
 bevy_yarnspinner = "0.7.0"
 bevy_yarnspinner_example_dialogue_view = "0.7.0"
+bevy-inspector-egui = "0.36.0"
 
 [target.wasm32-unknown-unknown.dependencies]
 getrandom = { version = "0.3", features = ["wasm_js"] }
