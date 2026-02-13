@@ -65,7 +65,7 @@ pub fn player_transition_between_sections(
         let tripwire_pos = tripwire_translation.translation.truncate();
         let distance_sq = player_pos.distance_squared(tripwire_pos);
         
-        if distance_sq <= sqrt(transtion_section.transition_radius) {
+        if distance_sq <= (transtion_section.transition_radius * transtion_section.transition_radius) {
             match transtion_section.next_section {
                 MapSection::WitchHouse => {
                     player_transform.translation = TRIPWIRE_HOUSE_TO_BRIDGE_POSITION + Vec3::new(-50., 0., 0.);

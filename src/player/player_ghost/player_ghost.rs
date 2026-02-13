@@ -7,8 +7,7 @@ use bevy::{
 use crate::{
     AppSystems, PausableSystems,
     asset_tracking::LoadResource,
-    player::action::{MovementController, PlayerAction},
-    player::player::ActionTimer,
+    player::{action::{MovementController, PlayerAction}, player::ActionTimer},
 };
 use super::player_ghost_animation::GhostPlayerAnimation;
 

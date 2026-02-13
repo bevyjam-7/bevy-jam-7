@@ -81,9 +81,9 @@ pub fn spawn_level(
             player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             spawn_object(
                 crate::inventory::inventory::ItemKind::Food1,
-                Vec3::new(0., 200., 0.),
+                Vec3::new(0., 200., 10.),
                 meshes.add(Rectangle::new(30., 20.)),
-                materials.add(ColorMaterial::from(Color::BLACK)),
+                materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.))),
             ),
 
             (

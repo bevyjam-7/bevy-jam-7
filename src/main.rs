@@ -15,6 +15,8 @@ mod map;
 pub mod game_consts;
 mod inventory;
 
+use avian2d::PhysicsPlugins;
+
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_yarnspinner::prelude::*;
 use bevy_yarnspinner_example_dialogue_view::prelude::*;
@@ -52,6 +54,9 @@ impl Plugin for AppPlugin {
             YarnSpinnerPlugin::with_yarn_source(YarnFileSource::file("dialogue/introduction.yarn")),
             ExampleYarnSpinnerDialogueViewPlugin::new(),
         ));
+
+        // Add physics
+        app.add_plugins(PhysicsPlugins::default().with_length_unit(20.));
 
         // Add other plugins.
         app.add_plugins((
