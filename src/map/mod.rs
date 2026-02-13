@@ -11,5 +11,6 @@ pub(super) fn plugin(app: &mut App) {
         level::plugin,
         teleporter::plugin,
         animation::plugin,
+        events::plugin,
     ));
 }

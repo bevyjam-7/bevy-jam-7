@@ -3,7 +3,7 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
+    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, events::{MapSection, TranstionBetweenSections}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -60,6 +60,12 @@ pub fn spawn_level(
         DespawnOnExit(Screen::Gameplay),
         children![
             witch_house_map(&map_assets, &mut texture_atlas_layouts),
+            teleportation_tripwire_entity(
+                TRIPWIRE_HOUSE_TO_BRIDGE_POSITION,
+                MapSection::Bridge,
+                &mut meshes,
+                &mut materials,
+            ),
             bridge_section_map(&mut meshes, &mut materials),
             player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             spawn_object(
@@ -68,7 +74,7 @@ pub fn spawn_level(
                 meshes.add(Rectangle::new(30., 20.)),
                 materials.add(ColorMaterial::from(Color::BLACK)),
             ),
-            
+
             (
                 Name::new("Gameplay Music"),
                 music(level_assets.music.clone())
@@ -118,6 +124,27 @@ pub fn bridge_section_map(
             ..default()
         }
     )
+}
+
+pub fn teleportation_tripwire_entity(
+    position: Vec3,
+    next_section: MapSection,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+) -> impl Bundle {
+    let tripwire_mesh = meshes.add(Rectangle::new(32., 32.));
+    let tripwire_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,0.5)));
+    (
+        Name::new("Teleporter Tripwire"),
+        Mesh2d(tripwire_mesh),
+        MeshMaterial2d(tripwire_material),
+        Transform {
+            translation: position,
+            ..default()
+        },
+        TranstionBetweenSections::new(next_section),
+    )
+
 }
 
 
