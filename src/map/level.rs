@@ -3,7 +3,7 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, events::{MapSection, TranstionBetweenSections}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
+    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, events::{MapSection, TranstionBetweenSections}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -66,6 +66,12 @@ pub fn spawn_level(
                 &mut meshes,
                 &mut materials,
             ),
+            teleportation_tripwire_entity(
+                TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION,
+                MapSection::WitchHouse,
+                &mut meshes,
+                &mut materials,
+            ),
             bridge_section_map(&mut meshes, &mut materials),
             player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             spawn_object(
@@ -101,8 +107,12 @@ pub fn witch_house_map(
                 index: 0,
             }
         ),
-        // make map twice the normal size
-        Transform::from_scale(Vec2::splat(2.0).extend(0.0)),
+        Transform {
+            // make map twice the normal size
+            scale: Vec2::splat(2.0).extend(0.0),
+            translation: Vec3::new(0., 0., -10.),
+            ..default()
+        },
         house_animation
     )
 }

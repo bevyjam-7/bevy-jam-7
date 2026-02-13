@@ -2,7 +2,7 @@
 
 use bevy::{
     image::{ImageLoaderSettings, ImageSampler},
-    prelude::*,
+    prelude::*, sprite::Anchor,
 };
 
 use leafwing_input_manager::prelude::*;
@@ -53,6 +53,7 @@ pub fn player(
         ActionTimer {
             timer: Timer::from_seconds(0.5, TimerMode::Once)
         },
+        Anchor::BOTTOM_CENTER,
         MovementController {
             max_speed,
             ..default()
