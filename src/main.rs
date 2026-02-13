@@ -13,8 +13,11 @@ mod screens;
 mod theme;
 mod map;
 pub mod game_consts;
+mod inventory;
 
-use bevy::{asset::AssetMetaCheck, camera::CameraProjection, prelude::*};
+use bevy::{asset::AssetMetaCheck, prelude::*};
+use bevy_yarnspinner::prelude::*;
+use bevy_yarnspinner_example_dialogue_view::prelude::*;
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
@@ -45,6 +48,11 @@ impl Plugin for AppPlugin {
                 }),
         );
 
+        app.add_plugins((
+            YarnSpinnerPlugin::with_yarn_source(YarnFileSource::file("dialogue/introduction.yarn")),
+            ExampleYarnSpinnerDialogueViewPlugin::new(),
+        ));
+
         // Add other plugins.
         app.add_plugins((
             asset_tracking::plugin,
@@ -56,6 +64,7 @@ impl Plugin for AppPlugin {
             screens::plugin,
             theme::plugin,
             map::plugin,
+            inventory::plugin,
         ));
 
         // Order new `AppSystems` variants by adding them here:

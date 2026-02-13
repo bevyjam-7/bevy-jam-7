@@ -121,11 +121,11 @@ impl GhostPlayerAnimation {
     /// The number of idle frames.
     const FLOATING_IDLE_FRAMES: usize = 4;
     /// The duration of each idle frame.
-    const FLOATING_IDLE_INTERVAL: Duration = Duration::from_millis(170);
+    const FLOATING_IDLE_INTERVAL: Duration = Duration::from_millis(170); // originally 170
     /// The number of walking frames.
     const FLOATING_FRAMES: usize = 4;
     /// The duration of each walking frame.
-    const FLOATING_INTERVAL: Duration = Duration::from_millis(170);
+    const FLOATING_INTERVAL: Duration = Duration::from_millis(170); // originally 170
 
     fn floating_idling() -> Self {
         Self {
@@ -210,11 +210,6 @@ impl GhostPlayerAnimation {
     /// Return sprite index in the atlas.
     pub fn get_atlas_index(&self) -> usize {
         match self.state {
-            GhostPlayerAnimationState::FloatingIdling => match self.facing {
-                GhostFacingDirection::Side => 0,
-                GhostFacingDirection::Up => 0,
-                GhostFacingDirection::Down => 0,
-            },
             GhostPlayerAnimationState::FloatingIdling => 0 + self.frame,
             GhostPlayerAnimationState::FloatingSide => 0 + self.frame,
             GhostPlayerAnimationState::FloatingUp => 0 + self.frame,

@@ -10,3 +10,7 @@ pub const PLAYER_Z_POSITION: f32 = 2.0;
 pub const TELEPORTER_A_LOCATION: Vec3 = Vec3::new(200., 0., 1.);
 pub const TELEPORTER_B_LOCATION: Vec3 = Vec3::new(-200., 0., 1.);
 pub const TELEPORTER_PROXIMITY_RADIUS: f32 = 50.0;
+
+pub mod pickup {
+    pub const DEFAULT_RADIUS: f32 = 30.0;
+}

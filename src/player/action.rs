@@ -15,8 +15,9 @@
 
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
+use crate::screens::Screen::Gameplay;
+use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer, GhostPlayerAssets}}};
 
-use crate::{AppSystems, PausableSystems, map::teleporter::{self, Teleporter}, player::{PlayerState, player::Player}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -28,11 +29,13 @@ pub(super) fn plugin(app: &mut App) {
     );
     
     app.add_systems(Update, 
-        (apply_actions)
+        (apply_actions, pick_up_item_action, drop_item_action)
         .chain()
         .in_set(AppSystems::RecordInput)
         .in_set(PausableSystems)
     );
+
+    app.add_systems(OnExit(Gameplay), (force_awake_state, reset_action_timer));
 }
 
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Debug, Hash, Reflect)]
@@ -41,6 +44,8 @@ pub enum PlayerAction {
     Move,
     Honkshoo,
     Teleport,
+    Pickup,
+    Drop,
 }
 
 impl PlayerAction {
@@ -51,12 +56,16 @@ impl PlayerAction {
         input_map.insert_dual_axis(Self::Move, GamepadStick::LEFT);
         input_map.insert(Self::Honkshoo, GamepadButton::South);
         input_map.insert(Self::Teleport, GamepadButton::East);
+        input_map.insert(Self::Pickup, GamepadButton::West);
+        input_map.insert(Self::Drop, GamepadButton::North);
 
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
         input_map.insert_dual_axis(Self::Move, VirtualDPad::arrow_keys());
         input_map.insert(Self::Honkshoo, KeyCode::Space);
         input_map.insert(Self::Teleport, KeyCode::KeyQ);
+        input_map.insert(Self::Pickup, KeyCode::KeyE);
+        input_map.insert(Self::Drop, KeyCode::KeyF);
         
         input_map
     }
@@ -64,26 +73,80 @@ impl PlayerAction {
     
 }
 
-fn apply_actions(
-    mut player_state: ResMut<State<PlayerState>>,
-    mut next_player_state: ResMut<NextState<PlayerState>>,
-    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController), With<Player>>,
+fn drop_item_action(
+    commands: Commands,
+    inventory: ResMut<Inventory>,
+    player_query: Query<&Transform, With<Player>>,
+    action_query: Query<&ActionState<PlayerAction>, With<Player>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (action_state, mut controller) in action_query.iter_mut() {
+    if let Ok(action_state) = action_query.single() {
+        if action_state.just_pressed(&PlayerAction::Drop) {
+            drop_item(commands, inventory, player_query, meshes, materials);
+        }
+    }
+}
+
+
+fn pick_up_item_action(
+    commands: Commands,
+    inventory: ResMut<Inventory>,
+    player_query: Query<&Transform, With<Player>>,
+    pickables: Query<(Entity, &GlobalTransform, &ObjectPickable)>,
+    action_query: Query<&ActionState<PlayerAction>, With<Player>>,
+) {
+    if let Ok(action_state) = action_query.single() {
+        if action_state.just_pressed(&PlayerAction::Pickup) {
+            handle_pickups(commands, inventory, player_query, pickables);
+        }
+    }
+}
+
+fn apply_actions(
+    player_state: ResMut<State<PlayerState>>,
+    mut next_player_state: ResMut<NextState<PlayerState>>,
+    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController, &mut ActionTimer), Or<(With<Player>, With<GhostPlayer>)>>,
+    player_query: Query<&GlobalTransform, (With<Player>, Without<GhostPlayer>)>,
+    ghost_query: Query<&GlobalTransform, (With<GhostPlayer>, Without<Player>)>,
+    time: Res<Time>,
+) {
+    const WAKE_UP_DISTANCE: f32 = 50.0;
+
+    for (action_state, mut controller, mut action_timer) in action_query.iter_mut() {
         // Set movement intent based on input actions, which are normalized to length 1.
         // If no input is pressed, this will be the zero vector.
         controller.intent = action_state.axis_pair(&PlayerAction::Move).normalize_or_zero();
 
+        action_timer.timer.tick(time.delta());
+
         // Other actions can be handled here as well.
-        if action_state.just_pressed(&PlayerAction::Honkshoo) {
+        if action_state.just_pressed(&PlayerAction::Honkshoo) && action_timer.timer.is_finished() {
             if player_state.get() == &PlayerState::Awake {
                 next_player_state.set(PlayerState::Asleep);
-            } else {
-                next_player_state.set(PlayerState::Awake);
+                println!("\nAsleep state applied")
+            } else if player_state.get() == &PlayerState::Asleep {
+                if let (Ok(player_transform), Ok(ghost_transform)) = (player_query.single(), ghost_query.single()) {
+                    let distance = player_transform.translation().distance(ghost_transform.translation());
+
+                    if distance <= WAKE_UP_DISTANCE {
+                        next_player_state.set(PlayerState::Awake);
+                        print!("\nAwake state applied")
+                    } else {
+                        println!("\nToo far from ghost to wake up!");
+                    }
+                }
+                else {
+                    println!("\nGhost not found - waking up anyway");
+                    next_player_state.set(PlayerState::Awake);
+                }
             }
-        }
+            action_timer.timer.reset();
+        }// Add these components to enable input handling:
+        // ActionState::<PlayerAction>::default();
     }
 }
+
 
 fn apply_movement(
     time: Res<Time>,
@@ -95,8 +158,24 @@ fn apply_movement(
     }
 }
 
+// Force player to Awake state when exiting gameplay
+fn force_awake_state(
+    mut next_player_state: ResMut<NextState<PlayerState>>,
+) {
+    next_player_state.set(PlayerState::Awake);
+    println!("\nForced player state to Awake on exit");
+}
 
-
+// resets action timer when exiting gameplay
+fn reset_action_timer(
+    mut timer_query: Query<&mut ActionTimer, With<Player>>,
+) {
+    for mut action_timer in &mut timer_query {
+        // Set the timer as finished by setting elapsed time to duration
+        let duration = action_timer.timer.duration();
+        action_timer.timer.set_elapsed(duration);
+    }
+}
 /// These are the movement parameters for our character controller.
 /// For now, this is only used for a single player, but it could power NPCs or
 /// other players as well.

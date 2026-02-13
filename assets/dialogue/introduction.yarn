@@ -1,0 +1,19 @@
+title: WakeUp
+position: 468,16
+---
+It's been a couple of days since you last saw your cat. You are beginning to become a bit worried.
+You feel like she might be over the bridge connected to the old abandoned house.
+===
+title: BridgeChecked
+position: 427,191
+---
+You check the bridge, and notice the muddy paw prints which lead over the the other side.
+However, the bridge is broken so you can't cross it.
+(Press space to change into a ghost.)
+===
+title: GhostForm
+position: 441,353
+---
+You transform into a ghost and are now able to cross the bridge. However, you need to leave your body behind.
+(Press space when you are near your body to return to it.)
+===

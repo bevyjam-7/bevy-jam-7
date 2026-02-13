@@ -12,4 +12,3 @@ pub(super) fn plugin(app: &mut App) {
         player_ghost_animation::plugin,
     ));
 }
-

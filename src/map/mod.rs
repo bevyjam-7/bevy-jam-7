@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 pub mod level;
 pub mod teleporter;
-pub mod bread;
+pub mod object;
+pub mod events;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
