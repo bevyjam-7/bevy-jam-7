@@ -18,6 +18,10 @@ pub struct LevelAssets {
     music: Handle<AudioSource>,
 }
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component)]
+pub struct Level;
+
 impl FromWorld for LevelAssets {
     fn from_world(world: &mut World) -> Self {
         let assets = world.resource::<AssetServer>();
@@ -55,6 +59,7 @@ pub fn spawn_level(
     );
     commands.spawn((
         Name::new("Level"),
+        Level,
         Transform::default(),
         Visibility::default(),
         DespawnOnExit(Screen::Gameplay),

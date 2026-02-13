@@ -69,8 +69,6 @@ impl PlayerAction {
         
         input_map
     }
-
-    
 }
 
 fn drop_item_action(
