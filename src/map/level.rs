@@ -59,8 +59,8 @@ pub fn spawn_level(
         Visibility::default(),
         DespawnOnExit(Screen::Gameplay),
         children![
-            player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             witch_house_map(&map_assets, &mut texture_atlas_layouts),
+            player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
             spawn_object(
                 crate::inventory::inventory::ItemKind::Food1,
                 Vec3::new(0., 200., 0.),
