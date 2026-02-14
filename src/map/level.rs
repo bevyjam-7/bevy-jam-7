@@ -127,7 +127,7 @@ pub fn spawn_level(
         children.spawn(old_house_map(&mut meshes, &mut materials));
         children.spawn(spawn_npc(&npc_assets, &mut texture_atlas_layouts));
         children.spawn(teleportation_tripwire_entity(
-            TRIPWIRE_OLD_TO_BRIDGE_POSITION,
+            TRIPWIRE_OLD_TO_BRIDGE_POSITION + OLD_HOUSE_LOCATION,
             MapSection::BridgeRight,
             &mut meshes, 
             &mut materials
@@ -227,7 +227,7 @@ pub fn teleportation_tripwire_entity(
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ) -> impl Bundle {
     let tripwire_mesh = meshes.add(Rectangle::new(32., 32.));
-    let tripwire_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,0.5)));
+    let tripwire_material = materials.add(ColorMaterial::from(Color::BLACK));
     (
         Name::new("Teleporter Tripwire"),
         Mesh2d(tripwire_mesh),
