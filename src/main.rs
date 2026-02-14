@@ -14,6 +14,7 @@ mod theme;
 mod map;
 pub mod game_consts;
 mod inventory;
+mod dialogue;
 
 use avian2d::{PhysicsPlugins, prelude::Gravity};
 
@@ -52,9 +53,11 @@ impl Plugin for AppPlugin {
 
         app.add_plugins((
             YarnSpinnerPlugin::with_yarn_source(YarnFileSource::file("dialogue/introduction.yarn")),
-            ExampleYarnSpinnerDialogueViewPlugin::new(),
         ));
 
+        app.add_plugins(dialogue::plugin);
+
+        
         // Add physics
         app.add_plugins(PhysicsPlugins::default().with_length_unit(64.)).insert_resource(Gravity(Vec2::ZERO));
 
