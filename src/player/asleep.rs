@@ -26,7 +26,7 @@ pub fn remove_initial_player_movement(
             .remove::<ActionState<PlayerAction>>()
             .remove::<InputMap<PlayerAction>>();
     }
-    println!("\nRemoved movement and input from player");
+    info!("\nRemoved movement and input from player");
 }
 
 // Spawn the ghost player when player enter asleep state
@@ -52,7 +52,7 @@ fn spawn_ghost_player(
                     ..default()
                 });
             });
-            println!("\nSpawned ghost player as child of level entity");
+            info!("\nSpawned ghost player as child of level entity");
         }
     }
 }
@@ -63,6 +63,6 @@ fn reset_player_animation_to_idle(
     for mut animation in &mut player_query {
         // Reset to idle state while preserving the facing direction
         animation.update_state(PlayerAnimationState::Idling);
-        println!("\nReset player animation to idle (asleep)");
+        info!("\nReset player animation to idle (asleep)");
     }
 }

@@ -17,9 +17,10 @@ use avian2d::math::AdjustPrecision;
 use avian2d::prelude::LinearVelocity;
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
+use crate::player::action;
 use crate::screens::Screen::Gameplay;
 use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer, GhostPlayerAssets}}};
-
+use crate::map::teleporter::Teleportable;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -31,7 +32,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     
     app.add_systems(Update, 
-        (apply_actions, pick_up_item_action, drop_item_action)
+        (apply_state_switch, pick_up_item_action, drop_item_action, teleport_entity)
         .chain()
         .in_set(AppSystems::RecordInput)
         .in_set(PausableSystems)
@@ -56,6 +57,8 @@ impl PlayerAction {
 
         // Default gamepad mapping for movement
         input_map.insert_dual_axis(Self::Move, GamepadStick::LEFT);
+
+        // Default gamepad mapping for interactions
         input_map.insert(Self::Honkshoo, GamepadButton::South);
         input_map.insert(Self::Teleport, GamepadButton::East);
         input_map.insert(Self::Pickup, GamepadButton::West);
@@ -64,6 +67,8 @@ impl PlayerAction {
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
         input_map.insert_dual_axis(Self::Move, VirtualDPad::arrow_keys());
+
+        // Default keyboard mapping for interactions
         input_map.insert(Self::Honkshoo, KeyCode::Space);
         input_map.insert(Self::Teleport, KeyCode::KeyQ);
         input_map.insert(Self::Pickup, KeyCode::KeyE);
@@ -90,22 +95,101 @@ fn drop_item_action(
     }
 }
 
+fn teleport_entity(
+    mut commands: Commands,
+    action_query: Query<&ActionState<PlayerAction>, With<GhostPlayer>>,
+    teleportable_query: Query<(Entity, &Teleportable)>,
+    mut teleporter_query: Query<&mut Teleporter>,
+) {
+    let Ok(action_state) = action_query.single() else {
+        return;
+    };
+    
+    if !action_state.just_pressed(&PlayerAction::Teleport) {
+        return;
+    }
+    
+    // Collect teleportation data first (immutable pass)
+    let mut teleports_to_perform = Vec::new();
+    
+    for (item_entity, teleportable) in &teleportable_query {
+        let Ok(teleporter) = teleporter_query.get(teleportable.on_teleporter_entity) else {
+            continue;
+        };
+        
+        if !teleporter.can_teleport {
+            continue;
+        }
+        
+        let Ok(buddy_teleporter) = teleporter_query.get(teleporter.tele_buddy) else {
+            continue;
+        };
+        
+        if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
+            info!("Buddy teleporter occupied by entity {:?}, cannot teleport", buddy_teleporter.containing_entity);
+            continue;
+        }
+        
+        // Store the data we need for teleportation
+        teleports_to_perform.push((
+            item_entity,
+            teleportable.on_teleporter_entity,
+            teleporter.tele_buddy,
+            teleporter.destination,
+        ));
+    }
+    
+    // Now perform the teleportations (mutable pass)
+    for (item_entity, source_tp, buddy_tp, destination) in teleports_to_perform {
+        // Clear source teleporter
+        if let Ok(mut teleporter) = teleporter_query.get_mut(source_tp) {
+            teleporter.containing_entity = Entity::PLACEHOLDER;
+        }
+        
+        // Set buddy teleporter
+        if let Ok(mut buddy) = teleporter_query.get_mut(buddy_tp) {
+            buddy.containing_entity = item_entity;
+        }
+        
+        // Update item
+        commands.entity(item_entity).insert(Teleportable { 
+            on_teleporter_entity: buddy_tp 
+        });
+        commands.entity(item_entity).insert(Transform::from_translation(destination));
+        
+        info!("Teleported item {:?} to {:?}", item_entity, destination);
+    }
+}
 
 fn pick_up_item_action(
-    commands: Commands,
+    mut commands: Commands,
     inventory: ResMut<Inventory>,
     player_query: Query<&Transform, With<Player>>,
     pickables: Query<(Entity, &GlobalTransform, &ObjectPickable)>,
     action_query: Query<&ActionState<PlayerAction>, With<Player>>,
+    teleportable_query: Query<&Teleportable>,
+    mut teleporter_query: Query<&mut Teleporter>,
 ) {
     if let Ok(action_state) = action_query.single() {
         if action_state.just_pressed(&PlayerAction::Pickup) {
+            // Before picking up, check if item is on a teleporter
+            for (entity, _, _) in &pickables {
+                if let Ok(teleportable) = teleportable_query.get(entity) {
+                    // Item is on a teleporter - unlink it first
+                    if let Ok(mut teleporter) = teleporter_query.get_mut(teleportable.on_teleporter_entity) {
+                        teleporter.containing_entity = Entity::PLACEHOLDER;
+                        info!("Cleared teleporter before pickup");
+                    }
+                    commands.entity(entity).remove::<Teleportable>();
+                }
+            }
+            
             handle_pickups(commands, inventory, player_query, pickables);
         }
     }
 }
 
-fn apply_actions(
+fn apply_state_switch(
     player_state: ResMut<State<PlayerState>>,
     mut next_player_state: ResMut<NextState<PlayerState>>,
     mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController, &mut ActionTimer), Or<(With<Player>, With<GhostPlayer>)>>,
@@ -122,7 +206,7 @@ fn apply_actions(
 
         action_timer.timer.tick(time.delta());
 
-        // Other actions can be handled here as well.
+        // State Swtiching with 0.5 cool down timer
         if action_state.just_pressed(&PlayerAction::Honkshoo) && action_timer.timer.is_finished() {
             if player_state.get() == &PlayerState::Awake {
                 next_player_state.set(PlayerState::Asleep);
@@ -133,19 +217,18 @@ fn apply_actions(
 
                     if distance <= WAKE_UP_DISTANCE {
                         next_player_state.set(PlayerState::Awake);
-                        print!("\nAwake state applied")
+                        info!("\nAwake state applied")
                     } else {
-                        println!("\nToo far from ghost to wake up!");
+                        info!("\nToo far from ghost to wake up!");
                     }
                 }
                 else {
-                    println!("\nGhost not found - waking up anyway");
+                    info!("\nGhost not found - waking up anyway");
                     next_player_state.set(PlayerState::Awake);
                 }
             }
             action_timer.timer.reset();
-        }// Add these components to enable input handling:
-        // ActionState::<PlayerAction>::default();
+        }
     }
 }
 
@@ -168,7 +251,7 @@ fn force_awake_state(
     mut next_player_state: ResMut<NextState<PlayerState>>,
 ) {
     next_player_state.set(PlayerState::Awake);
-    println!("\nForced player state to Awake on exit");
+    info!("\nForced player state to Awake on exit");
 }
 
 // resets action timer when exiting gameplay
