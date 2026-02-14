@@ -6,7 +6,7 @@ pub mod object;
 pub mod events;
 pub mod animation;
 pub mod physics;
-mod borders;
+pub mod borders;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
