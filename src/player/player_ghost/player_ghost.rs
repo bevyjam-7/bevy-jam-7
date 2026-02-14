@@ -39,7 +39,7 @@ pub fn ghost_player(
         LockedAxes::ROTATION_LOCKED,
         Collider::rectangle(30., 20.),
         CollisionLayers::new(
-            GameLayer::Player,
+            GameLayer::GhostPlayer,
             [
                 GameLayer::Default,
                 GameLayer::Border,

@@ -20,9 +20,6 @@ pub(super) fn plugin(app: &mut App) {
 
 use avian2d::prelude::*;
 
-#[derive(EntityEvent)]
-struct PickupEvent(Entity);
-
 /// The player character.
 pub fn player(
     max_speed: f32,
@@ -56,6 +53,7 @@ pub fn player(
             [
                 GameLayer::Default,
                 GameLayer::Border,
+                GameLayer::BrokenBridge,
             ],
         ),
         LinearVelocity::default(),

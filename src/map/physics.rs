@@ -10,4 +10,5 @@ pub enum GameLayer {
     GhostPlayer,
     Border,
     Ground,
+    BrokenBridge,
 }

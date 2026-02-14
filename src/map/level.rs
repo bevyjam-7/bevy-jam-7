@@ -3,7 +3,7 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, borders::spawn_box_borders, events::{MapSection, TranstionBetweenSections}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
+    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, Y_BRIDGE_SECTION_BORDER_OFFSETS}, map::{animation::HouseAnimation, borders::{spawn_box_borders, spawn_broken_bridge_collision}, events::{MapSection, TranstionBetweenSections}, npc::{NpcAssets, spawn_npc}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -37,23 +37,22 @@ pub fn spawn_level(
     level_assets: Res<LevelAssets>,
     player_assets: Res<PlayerAssets>,
     map_assets: Res<MapAssets>,
+    npc_assets: Res<NpcAssets>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let teleporter_position_a = TELEPORTER_A_LOCATION;
-    let teleporter_position_b = TELEPORTER_B_LOCATION;
 
     let (teleporter_1, teleporter_2) = create_teleporter_pair(
-        teleporter_position_a,
-        teleporter_position_b,
+        TELEPORTER_A_LOCATION,
+        TELEPORTER_B_LOCATION + OLD_HOUSE_LOCATION,
         &mut meshes,
         &mut materials,
     );
     link_teleporters(
         &mut commands, 
-        teleporter_position_a, 
-        teleporter_position_b, 
+        TELEPORTER_A_LOCATION, 
+        TELEPORTER_B_LOCATION + OLD_HOUSE_LOCATION, 
         teleporter_1, 
         teleporter_2
     );
@@ -67,20 +66,23 @@ pub fn spawn_level(
     ));
     
     level_entity.with_children(|children| {
+        // Witch house map section
         children.spawn(witch_house_map(&map_assets, &mut texture_atlas_layouts));
         children.spawn(teleportation_tripwire_entity(
             TRIPWIRE_HOUSE_TO_BRIDGE_POSITION,
-            MapSection::Bridge,
+            MapSection::BridgeLeft,
             &mut meshes,
             &mut materials,
         ));
-        children.spawn(teleportation_tripwire_entity(
-            TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION,
-            MapSection::WitchHouse,
-            &mut meshes,
-            &mut materials,
+        children.spawn(player(5000.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down));
+        children.spawn(spawn_object(
+            crate::inventory::inventory::ItemKind::Food1,
+            Vec3::new(0., 200., 10.),
+            meshes.add(Rectangle::new(30., 20.)),
+            materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.))),
         ));
-        for border in spawn_box_borders(Vec3::ZERO).into_iter() {
+
+        for border in spawn_box_borders(Vec3::ZERO, Vec4::ZERO, Vec4::ZERO).into_iter() {
             println!("Spawning border from position: {:?}", border.6.translation);
             children.spawn((
                 border.0,
@@ -92,14 +94,59 @@ pub fn spawn_level(
                 border.6,
             ));
         }
+
+        // Bridge map section
         children.spawn(bridge_section_map(&mut meshes, &mut materials));
-        children.spawn(player(5000.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down));
-        children.spawn(spawn_object(
-            crate::inventory::inventory::ItemKind::Food1,
-            Vec3::new(0., 200., 10.),
-            meshes.add(Rectangle::new(30., 20.)),
-            materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.))),
+        children.spawn(teleportation_tripwire_entity(
+            TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION,
+            MapSection::WitchHouse,
+            &mut meshes,
+            &mut materials,
         ));
+        children.spawn(teleportation_tripwire_entity(
+            TRIPWIRE_BRIDGE_TO_OLD_POSITION + BRIDGE_SECTION_LOCATION,
+            MapSection::OldHouse,
+            &mut meshes,
+            &mut materials,
+        ));
+        children.spawn(spawn_broken_bridge_collision(BRIDGE_SECTION_LOCATION));
+        for border in spawn_box_borders(BRIDGE_SECTION_LOCATION, Vec4::ZERO, Y_BRIDGE_SECTION_BORDER_OFFSETS).into_iter() {
+            println!("Spawning border from position: {:?}", border.6.translation);
+            children.spawn((
+                border.0,
+                border.1,
+                border.2,
+                border.3,
+                border.4,
+                border.5,
+                border.6,
+            ));
+        }
+
+        // Old house map section
+        children.spawn(old_house_map(&mut meshes, &mut materials));
+        children.spawn(spawn_npc(&npc_assets, &mut texture_atlas_layouts));
+        children.spawn(teleportation_tripwire_entity(
+            TRIPWIRE_OLD_TO_BRIDGE_POSITION,
+            MapSection::BridgeRight,
+            &mut meshes, 
+            &mut materials
+        ));
+        for border in spawn_box_borders(OLD_HOUSE_LOCATION, Vec4::ZERO, Vec4::ZERO).into_iter() {
+            println!("Spawning border from position: {:?}", border.6.translation);
+            children.spawn((
+                border.0,
+                border.1,
+                border.2,
+                border.3,
+                border.4,
+                border.5,
+                border.6,
+            ));
+        }
+
+
+
         children.spawn((
             Name::new("Gameplay Music"),
             music(level_assets.music.clone())
@@ -149,6 +196,25 @@ pub fn bridge_section_map(
             // make map twice the normal size
             scale: Vec2::splat(2.0).extend(0.0),
             translation: BRIDGE_SECTION_LOCATION,
+            ..default()
+        }
+    )
+}
+
+pub fn old_house_map(
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+) -> impl Bundle {
+    let house_mesh = meshes.add(Rectangle::new(SCENE_TILE_SIZES.x as f32, SCENE_TILE_SIZES.y as f32));
+    let house_material = materials.add(ColorMaterial::from(Color::hsv(0.35,1.,0.6)));
+    (
+        Name::new("Old House"),
+        Mesh2d(house_mesh),
+        MeshMaterial2d(house_material),
+        Transform {
+            // make map twice the normal size
+            scale: Vec2::splat(2.0).extend(0.0),
+            translation: OLD_HOUSE_LOCATION,
             ..default()
         }
     )
