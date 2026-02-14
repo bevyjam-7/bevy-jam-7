@@ -15,7 +15,7 @@ mod map;
 pub mod game_consts;
 mod inventory;
 
-use avian2d::PhysicsPlugins;
+use avian2d::{PhysicsPlugins, prelude::Gravity};
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_yarnspinner::prelude::*;
@@ -56,7 +56,7 @@ impl Plugin for AppPlugin {
         ));
 
         // Add physics
-        app.add_plugins(PhysicsPlugins::default().with_length_unit(20.));
+        app.add_plugins(PhysicsPlugins::default().with_length_unit(64.)).insert_resource(Gravity(Vec2::ZERO));
 
         // Add other plugins.
         app.add_plugins((

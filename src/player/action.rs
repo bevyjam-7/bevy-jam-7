@@ -13,6 +13,8 @@
 //! purposes. If you want to move the player in a smoother way,
 //! consider using a [fixed timestep](https://github.com/bevyengine/bevy/blob/main/examples/movement/physics_in_fixed_timestep.rs).
 
+use avian2d::math::AdjustPrecision;
+use avian2d::prelude::LinearVelocity;
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 use crate::player::action;
@@ -74,6 +76,8 @@ impl PlayerAction {
         
         input_map
     }
+
+    
 }
 
 fn drop_item_action(
@@ -198,7 +202,7 @@ fn apply_state_switch(
     for (action_state, mut controller, mut action_timer) in action_query.iter_mut() {
         // Set movement intent based on input actions, which are normalized to length 1.
         // If no input is pressed, this will be the zero vector.
-        controller.intent = action_state.axis_pair(&PlayerAction::Move).normalize_or_zero();
+        controller.intent = action_state.clamped_axis_pair(&PlayerAction::Move).xy().normalize_or_zero();
 
         action_timer.timer.tick(time.delta());
 
@@ -231,11 +235,14 @@ fn apply_state_switch(
 
 fn apply_movement(
     time: Res<Time>,
-    mut movement_query: Query<(&MovementController, &mut Transform)>,
+    mut movement_query: Query<(&mut LinearVelocity, &MovementController)>,
 ) {
-    for (controller, mut transform) in &mut movement_query {
-        let velocity = controller.max_speed * controller.intent;
-        transform.translation += velocity.extend(0.0) * time.delta_secs();
+    for (mut velocity, controller) in &mut movement_query {
+        
+        let delta_time = time.delta_secs_f64().adjust_precision();
+
+        velocity.x = controller.intent.x * controller.max_speed * delta_time;
+        velocity.y = controller.intent.y * controller.max_speed * delta_time;
     }
 }
 

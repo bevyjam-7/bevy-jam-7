@@ -3,7 +3,7 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, events::{MapSection, TranstionBetweenSections}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
+    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS}, map::{animation::HouseAnimation, borders::spawn_box_borders, events::{MapSection, TranstionBetweenSections}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -57,41 +57,54 @@ pub fn spawn_level(
         teleporter_1, 
         teleporter_2
     );
-    commands.spawn((
+    
+    let mut level_entity = commands.spawn((
         Name::new("Level"),
         Level,
         Transform::default(),
         Visibility::default(),
         DespawnOnExit(Screen::Gameplay),
-        children![
-            witch_house_map(&map_assets, &mut texture_atlas_layouts),
-            teleportation_tripwire_entity(
-                TRIPWIRE_HOUSE_TO_BRIDGE_POSITION,
-                MapSection::Bridge,
-                &mut meshes,
-                &mut materials,
-            ),
-            teleportation_tripwire_entity(
-                TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION,
-                MapSection::WitchHouse,
-                &mut meshes,
-                &mut materials,
-            ),
-            bridge_section_map(&mut meshes, &mut materials),
-            player(100.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down), // original speed was 100.0, 0.0 to see sprite alignment better
-            spawn_object(
-                crate::inventory::inventory::ItemKind::Food1,
-                Vec3::new(0., 200., 10.),
-                meshes.add(Rectangle::new(30., 20.)),
-                materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.))),
-            ),
-
-            (
-                Name::new("Gameplay Music"),
-                music(level_assets.music.clone())
-            )
-        ],
     ));
+    
+    level_entity.with_children(|children| {
+        children.spawn(witch_house_map(&map_assets, &mut texture_atlas_layouts));
+        children.spawn(teleportation_tripwire_entity(
+            TRIPWIRE_HOUSE_TO_BRIDGE_POSITION,
+            MapSection::Bridge,
+            &mut meshes,
+            &mut materials,
+        ));
+        children.spawn(teleportation_tripwire_entity(
+            TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION,
+            MapSection::WitchHouse,
+            &mut meshes,
+            &mut materials,
+        ));
+        for border in spawn_box_borders(Vec3::ZERO).into_iter() {
+            println!("Spawning border from position: {:?}", border.6.translation);
+            children.spawn((
+                border.0,
+                border.1,
+                border.2,
+                border.3,
+                border.4,
+                border.5,
+                border.6,
+            ));
+        }
+        children.spawn(bridge_section_map(&mut meshes, &mut materials));
+        children.spawn(player(5000.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down));
+        children.spawn(spawn_object(
+            crate::inventory::inventory::ItemKind::Food1,
+            Vec3::new(0., 200., 10.),
+            meshes.add(Rectangle::new(30., 20.)),
+            materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.))),
+        ));
+        children.spawn((
+            Name::new("Gameplay Music"),
+            music(level_assets.music.clone())
+        ));
+    });
 }
 
 /// A square entity that will be the background of the level

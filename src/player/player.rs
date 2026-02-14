@@ -8,18 +8,17 @@ use bevy::{
 use leafwing_input_manager::prelude::*;
 
 use crate::{
-    AppSystems, PausableSystems,
-    asset_tracking::LoadResource,
-    player::{
-        animation::{PlayerAnimation, FacingDirection},
-        action::{MovementController, PlayerAction},
-    },
+    AppSystems, PausableSystems, asset_tracking::LoadResource, map::physics::GameLayer, player::{
+        action::{MovementController, PlayerAction}, animation::{FacingDirection, PlayerAnimation}
+    }
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.load_resource::<PlayerAssets>();
     app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
 }
+
+use avian2d::prelude::*;
 
 #[derive(EntityEvent)]
 struct PickupEvent(Entity);
@@ -36,7 +35,6 @@ pub fn player(
     let layout = TextureAtlasLayout::from_grid(UVec2::splat(64), 4, 4, Some(UVec2::splat(1)), None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new(facing);
-
     
     (
         Name::new("Player"),
@@ -50,6 +48,17 @@ pub fn player(
         ),
         Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
         PlayerAction::default_input_map(),
+        RigidBody::Dynamic,
+        LockedAxes::ROTATION_LOCKED,
+        Collider::rectangle(30., 20.),
+        CollisionLayers::new(
+            GameLayer::Player,
+            [
+                GameLayer::Default,
+                GameLayer::Border,
+            ],
+        ),
+        LinearVelocity::default(),
         ActionTimer {
             timer: Timer::from_seconds(0.5, TimerMode::Once)
         },
