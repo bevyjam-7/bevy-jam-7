@@ -1,3 +1,4 @@
+use avian2d::prelude::LinearVelocity;
 use bevy::prelude::*;
 
 use crate::{game_consts::PLAYER_SPEED, player::{PlayerState, action::{MovementController, PlayerAction}, animation::{PlayerAnimation, PlayerAnimationState}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}}};
@@ -18,13 +19,15 @@ pub(super) fn plugin(app: &mut App) {
 // Take movement away from original player
 pub fn remove_initial_player_movement(
     mut commands: Commands,
-    player_query: Query<Entity, With<Player>>,
+    mut player_query: Query<(Entity, &mut LinearVelocity) , With<Player>>,
 ) {
-    for entity in &player_query {
+    for (entity, mut velocity) in player_query.iter_mut() {
         commands.entity(entity)
             .remove::<MovementController>()
             .remove::<ActionState<PlayerAction>>()
             .remove::<InputMap<PlayerAction>>();
+        velocity.x = 0.0;
+        velocity.y = 0.0;
     }
     info!("\nRemoved movement and input from player");
 }

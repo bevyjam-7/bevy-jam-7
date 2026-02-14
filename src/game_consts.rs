@@ -16,7 +16,7 @@ pub const PLAYER_ATLAS_COLS: usize = 4;
 pub const PLAYER_ATLAS_ROWS: usize = 2;
 // The "z" position determines the rendering order for entities.
 pub const PLAYER_Z_POSITION: f32 = 2.0;
-pub const PLAYER_SPEED: f32 = 5000.0;
+pub const PLAYER_SPEED: f32 = 15000.0;
 
 // Teleporter related constants
 pub const TELEPORTER_A_LOCATION: Vec3 = Vec3::new(-70., -70., 1.);

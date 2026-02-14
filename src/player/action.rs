@@ -17,6 +17,7 @@ use avian2d::math::AdjustPrecision;
 use avian2d::prelude::LinearVelocity;
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
+use crate::game_consts::PLAYER_SPEED;
 use crate::player::action;
 use crate::screens::Screen::Gameplay;
 use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer, GhostPlayerAssets}}};
@@ -283,7 +284,7 @@ impl Default for MovementController {
         Self {
             intent: Vec2::ZERO,
             // 400 pixels per second is a nice default, but we can still vary this per character.
-            max_speed: 400.0,
+            max_speed: PLAYER_SPEED,
         }
     }
 }
