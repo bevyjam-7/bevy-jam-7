@@ -76,7 +76,7 @@ pub fn player_transition_between_sections(
                     camera_transform.translation = BRIDGE_SECTION_LOCATION;
                 },
             }
-            println!("Player transitioned to section: {:?}", transtion_section.next_section);
+            info!("Player transitioned to section: {:?}", transtion_section.next_section);
             transtion_section.can_transition = false;
         } else {
             transtion_section.can_transition = true;

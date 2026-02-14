@@ -35,5 +35,5 @@ fn restore_player_movement(
                 PlayerAction::default_input_map(),
             ));
     }
-    println!("\nRestored movement and input to player");
+    info!("\nRestored movement and input to player");
 }

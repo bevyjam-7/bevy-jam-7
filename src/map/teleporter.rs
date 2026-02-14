@@ -1,14 +1,17 @@
 use bevy::prelude::*;
 
 use crate::{AppSystems, PausableSystems, game_consts::TELEPORTER_PROXIMITY_RADIUS, player::{PlayerState, player::Player}, screens::Screen};
+use crate::player::player_ghost::player_ghost::GhostPlayer;
+use crate::inventory::inventory::ObjectPickable;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(Update, player_near_teleporter
+    app.add_systems(Update, (player_near_teleporter, detect_items_on_teleporters)
         .chain()
         .in_set(AppSystems::Update)
         .in_set(PausableSystems),
     );
 }
+
 // Teleporter component.
 #[derive(Component, Debug, Clone, PartialEq, Copy, Reflect)]
 pub struct Teleporter {
@@ -22,75 +25,132 @@ pub struct Teleporter {
 }
 
 #[derive(Component, Debug, Reflect)]
-struct Teleportable {
-    on_teleporter: Teleporter,
+pub struct Teleportable {
+    pub on_teleporter_entity: Entity,
 }
 
 #[derive(EntityEvent)]
 struct TeleportEvent(Entity);
 
 fn link_object_to_tp(
-    mut entity: Entity,
-    mut teleporter: Teleporter,
-    mut commands: Commands,
+    entity: Entity,
+    teleporter_entity: Entity,
+    commands: &mut Commands,
+    teleporter_query: &mut Query<(Entity, &Transform, &mut Teleporter)>,
 ) {
+    let Ok((_, _, mut teleporter)) = teleporter_query.get_mut(teleporter_entity) else {
+        info!("Teleporter entity not found");
+        return;
+    };
+    
     if teleporter.containing_entity != Entity::PLACEHOLDER {
         info!("Teleporter is already occupied, cannot link object.");
-        return; // Teleporter is already occupied.
+        return;
     }
-    commands.entity(entity)
-        .insert(Teleportable { on_teleporter: teleporter });
-    teleporter.set_containing_entity(entity);
+    
+    commands.entity(entity).insert(Teleportable { 
+        on_teleporter_entity: teleporter_entity 
+    });
+    
+    teleporter.containing_entity = entity;
+    info!("Linked entity {:?} to teleporter {:?}", entity, teleporter_entity);
 }
 
 fn unlink_object_from_tp(
-    mut entity: Entity,
-    mut teleporter: Teleporter,
-    mut commands: Commands,
+    entity: Entity,
+    teleporter_entity: Entity,
+    commands: &mut Commands,
+    teleporter_query: &mut Query<(Entity, &Transform, &mut Teleporter)>,
 ) {
-    if teleporter.containing_entity == Entity::PLACEHOLDER {
+    let Ok((_, _, mut teleporter)) = teleporter_query.get_mut(teleporter_entity) else {
+        info!("Teleporter entity not found");
+        return;
+    };
+    
+    if teleporter.containing_entity != entity {
         info!("Entity is not on this teleporter, cannot unlink.");
-        return; // Entity is not on this teleporter.
+        return;
     }
-    commands.entity(entity)
-        .remove::<Teleportable>();
-    teleporter.set_containing_entity(Entity::PLACEHOLDER);
+    
+    commands.entity(entity).remove::<Teleportable>();
+    teleporter.containing_entity = Entity::PLACEHOLDER;
+    info!("Unlinked entity {:?} from teleporter {:?}", entity, teleporter_entity);
 }
 
-// fn teleport_entity(
-//     entity_to_tp: On<TeleportEvent>,
-//     mut teleporter_query: Query<&mut Teleporter>,
-//     mut commands: Commands,
-// ) {
-//     let Ok(mut object) = commands.get_entity(entity_to_tp.0) else {
-//         return;
-//     };
 
-//     let Ok(mut teleporter) = teleporter_query.get_mut(object.) else {
-//         return;
-//     };
-
-//     let current_teleporter = teleportable_component.on_teleporter;
-
-
-// }
+fn detect_items_on_teleporters(
+    mut commands: Commands,
+    item_query: Query<(Entity, &Transform), With<ObjectPickable>>,
+    teleportable_query: Query<&Teleportable>,
+    mut teleporter_query: Query<(Entity, &Transform, &mut Teleporter)>,
+) {
+    for (item_entity, item_transform) in &item_query {
+        let mut is_near_teleporter = false;
+        let mut nearest_tp_entity = None;
+        
+        // Check if item is near any teleporter
+        for (tp_entity, tp_transform, _) in &teleporter_query {
+            let distance = item_transform.translation.distance(tp_transform.translation);
+            
+            if distance < TELEPORTER_PROXIMITY_RADIUS {
+                is_near_teleporter = true;
+                nearest_tp_entity = Some(tp_entity);
+                break;
+            }
+        }
+        
+        // Check if item already has Teleportable component
+        if let Ok(teleportable) = teleportable_query.get(item_entity) {
+            // Item is already linked to a teleporter
+            if !is_near_teleporter {
+                // Item moved away - unlink it
+                unlink_object_from_tp(
+                    item_entity, 
+                    teleportable.on_teleporter_entity, 
+                    &mut commands, 
+                    &mut teleporter_query
+                );
+            }
+        } else {
+            // Item is not linked to any teleporter
+            if is_near_teleporter {
+                // Item is now near a teleporter - link it
+                if let Some(tp_entity) = nearest_tp_entity {
+                    link_object_to_tp(
+                        item_entity, 
+                        tp_entity, 
+                        &mut commands, 
+                        &mut teleporter_query
+                    );
+                }
+            }
+        }
+    }
+}
 
 /// Query if player is near a teleporter
 fn player_near_teleporter(
     player_state: Res<State<PlayerState>>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<&Transform, With<GhostPlayer>>,
     mut teleporter_query: Query<(&Transform, &mut Teleporter)>,
 ) {
-    if player_state.get() != &PlayerState::Awake {
+    if player_state.get() != &PlayerState::Asleep {
         return; // Only check for teleportation when the player is awake.
     }
+    
+    // First, reset all teleporters to can_teleport = false
+    for (_teleporter_transform, mut teleporter) in &mut teleporter_query {
+        teleporter.can_teleport = false;
+    }
+    
+    // Then check if player is near any teleporter
     for player_transform in &player_query {
         for (teleporter_transform, mut teleporter) in &mut teleporter_query {
             let distance = player_transform.translation.distance(teleporter_transform.translation);
             if distance < TELEPORTER_PROXIMITY_RADIUS {
                 teleporter.can_teleport = true;
-                info!("Player is near teleporter, can teleport.");
-                return;
+                info!("Ghost player is near teleporter, can teleport.");
+                // Don't return here - let it check all teleporters in case player is near multiple
             }
         }
     }
@@ -142,7 +202,7 @@ pub fn create_teleporter_pair(
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ) -> (impl Bundle, impl Bundle) {
     let teleporter_mesh = &meshes.add(Rectangle::new(200., 200.));
-    let teleporter_material = materials.add(ColorMaterial::from(Color::BLACK));
+    let teleporter_material = materials.add(ColorMaterial::from(Color::BLACK.with_alpha(0.5)));
     let teleporter_a = (
         Name::new("Teleporter A"),
         DespawnOnExit(Screen::Gameplay),
