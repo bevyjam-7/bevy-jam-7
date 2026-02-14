@@ -1,13 +1,12 @@
 // Ghost_Player behavior.
 
+use avian2d::prelude::{Collider, CollisionLayers, LinearVelocity, LockedAxes, RigidBody};
 use bevy::{
     image::{ImageLoaderSettings, ImageSampler},
-    prelude::*,
+    prelude::*, sprite::Anchor,
 };
 use crate::{
-    AppSystems, PausableSystems,
-    asset_tracking::LoadResource,
-    player::{action::{MovementController, PlayerAction}, player::ActionTimer},
+    AppSystems, PausableSystems, asset_tracking::LoadResource, map::physics::GameLayer, player::{action::{MovementController, PlayerAction}, player::ActionTimer}
 };
 use super::player_ghost_animation::GhostPlayerAnimation;
 
@@ -36,6 +35,18 @@ pub fn ghost_player(
             },
             
         ),
+        RigidBody::Dynamic,
+        LockedAxes::ROTATION_LOCKED,
+        Collider::rectangle(30., 20.),
+        CollisionLayers::new(
+            GameLayer::Player,
+            [
+                GameLayer::Default,
+                GameLayer::Border,
+            ],
+        ),
+        LinearVelocity::default(),
+        Anchor::BOTTOM_CENTER,
         Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
         PlayerAction::default_input_map(),
         ActionTimer {

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::player::{PlayerState, animation::{PlayerAnimation, PlayerAnimationState}, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}};
+use crate::{game_consts::PLAYER_SPEED, player::{PlayerState, action::{MovementController, PlayerAction}, animation::{PlayerAnimation, PlayerAnimationState}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}}};
 use leafwing_input_manager::prelude::*;
 use crate::map::level::Level;
 
@@ -42,7 +42,7 @@ fn spawn_ghost_player(
             commands.entity(level_entity).with_children(|parent| {
                 parent.spawn(
                     ghost_player(
-                        100.0,
+                        PLAYER_SPEED,
                         ghost_player_assets,
                         texture_atlas_layouts,
                     )

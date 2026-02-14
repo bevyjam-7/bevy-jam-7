@@ -5,7 +5,8 @@ pub const WITCH_HOUSE_ATLAS_COLS: u32 = 15;
 pub const WITCH_HOUSE_ATLAS_ROWS: u32 = 1;
 pub const SCENE_TILE_SIZES: UVec2 = UVec2::new(256, 320);
 pub const WITCH_HOUSE_LOCATION: Vec3 = Vec3::new(0., 0., 0.);
-pub const BRIDGE_SECTION_LOCATION: Vec3 = Vec3::new(1200., 0., -10.);
+pub const BRIDGE_SECTION_LOCATION: Vec3 = Vec3::new(1400., 0., -10.);
+pub const OLD_HOUSE_LOCATION: Vec3 = Vec3::new(2800., 0., -10.);
 
 // Thickness of collision borders around the map
 pub const BORDER_THICKNESS: f32 = 50.0;
