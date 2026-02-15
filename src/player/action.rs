@@ -58,7 +58,6 @@ pub enum PlayerAction {
     #[actionlike(DualAxis)]
     Move,
     Honkshoo,
-    Teleport,
     Pickup,
     Drop,
     Interact,
@@ -72,11 +71,10 @@ impl PlayerAction {
         input_map.insert_dual_axis(Self::Move, GamepadStick::LEFT);
 
         // Default gamepad mapping for interactions
-        input_map.insert(Self::Honkshoo, GamepadButton::South);
-        input_map.insert(Self::Teleport, GamepadButton::East);
-        input_map.insert(Self::Pickup, GamepadButton::West);
-        input_map.insert(Self::Drop, GamepadButton::North);
-        input_map.insert(Self::Interact , GamepadButton::DPadUp);
+        input_map.insert(Self::Honkshoo, GamepadButton::East);
+        input_map.insert(Self::Pickup, GamepadButton::DPadUp);
+        input_map.insert(Self::Drop, GamepadButton::DPadDown);
+        input_map.insert(Self::Interact , GamepadButton::South);
 
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
@@ -84,9 +82,8 @@ impl PlayerAction {
 
         // Default keyboard mapping for interactions
         input_map.insert(Self::Honkshoo, KeyCode::Space);
-        input_map.insert(Self::Teleport, KeyCode::KeyQ);
         input_map.insert(Self::Pickup, KeyCode::KeyE);
-        input_map.insert(Self::Drop, KeyCode::KeyF);
+        input_map.insert(Self::Drop, KeyCode::KeyR);
         input_map.insert(Self::Interact , KeyCode::KeyT);
         
         input_map
@@ -118,7 +115,7 @@ fn teleport_entity(
         return;
     };
     
-    if !action_state.just_pressed(&PlayerAction::Teleport) {
+    if !action_state.just_pressed(&PlayerAction::Interact) {
         return;
     }
     
