@@ -1,4 +1,4 @@
-use crate::{ExampleYarnSpinnerDialogueViewSystemSet, dialogue::{YarnSpinnerDialogueViewSystemSet, option_selection::OptionSelection, setup::{DialogueContinueNode, DialogueNode, UiRootNode, create_dialog_text}, updating::SpeakerChangeEvent}};
+use crate::{ExampleYarnSpinnerDialogueViewSystemSet, Pause, dialogue::{YarnSpinnerDialogueViewSystemSet, option_selection::OptionSelection, setup::{DialogueContinueNode, DialogueNode, UiRootNode, create_dialog_text}, updating::SpeakerChangeEvent}};
 use bevy::platform::time::Instant;
 use bevy::prelude::*;
 use bevy_yarnspinner::{events::*, prelude::*};
@@ -15,7 +15,7 @@ pub(crate) fn typewriter_plugin(app: &mut App) {
         )
             .chain()
             .after(YarnSpinnerSystemSet)
-            .in_set(ExampleYarnSpinnerDialogueViewSystemSet),
+            .in_set(YarnSpinnerDialogueViewSystemSet),
     )
     .add_message::<TypewriterFinishedEvent>();
 

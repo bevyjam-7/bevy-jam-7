@@ -86,6 +86,7 @@ fn select_option(
     window: Single<Entity, With<PrimaryWindow>>,
 ) {
     if !typewriter.is_finished() {
+        
         return;
     }
 
@@ -121,7 +122,7 @@ fn select_option(
         }
     }
     if has_selected_id {
-        commands.trigger(HasSelectedOptionEvent);
+        commands.trigger(HasSelectedOptionEvent);        
     }
 }
 

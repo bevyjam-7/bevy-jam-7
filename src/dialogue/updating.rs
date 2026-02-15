@@ -1,4 +1,5 @@
-use crate::ExampleYarnSpinnerDialogueViewSystemSet;
+use crate::dialogue::YarnSpinnerDialogueViewSystemSet;
+use crate::Pause;
 use crate::dialogue::option_selection::OptionSelection;
 use crate::dialogue::setup::{DialogueContinueNode, DialogueNameNode, UiRootNode};
 use crate::dialogue::typewriter::Typewriter;
@@ -11,7 +12,7 @@ pub(crate) fn ui_updating_plugin(app: &mut App) {
         continue_dialogue
             .run_if(resource_exists::<Typewriter>)
             .after(YarnSpinnerSystemSet)
-            .in_set(ExampleYarnSpinnerDialogueViewSystemSet),
+            .in_set(YarnSpinnerDialogueViewSystemSet),
     )
     .add_message::<SpeakerChangeEvent>()
     .register_type::<SpeakerChangeEvent>();
@@ -35,14 +36,21 @@ pub struct SpeakerChangeEvent {
     pub speaking: bool,
 }
 
-fn show_dialog(_: On<DialogueStarted>, mut visibility: Single<&mut Visibility, With<UiRootNode>>) {
+fn show_dialog(
+    _: On<DialogueStarted>, 
+    mut visibility: Single<&mut Visibility, With<UiRootNode>>,
+    mut next_pause: ResMut<NextState<Pause>>,
+) {
+    next_pause.set(Pause(true));
     **visibility = Visibility::Inherited;
 }
 
 fn hide_dialog(
     _: On<DialogueCompleted>,
     mut root_visibility: Single<&mut Visibility, With<UiRootNode>>,
+    mut next_pause: ResMut<NextState<Pause>>,
 ) {
+    next_pause.set(Pause(false));
     **root_visibility = Visibility::Hidden;
 }
 

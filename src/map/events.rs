@@ -2,7 +2,7 @@ use bevy::{ecs::system::command, math::ops::sqrt, prelude::*};
 use bevy_yarnspinner::prelude::*;
 use bevy_yarnspinner_example_dialogue_view::prelude::*;
 
-use crate::{AppSystems, PausableSystems, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_PROXIMITY_RADIUS, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_LOCATION}, player::{action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer}};
+use crate::{AppSystems, PausableSystems, Pause, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_PROXIMITY_RADIUS, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_LOCATION}, player::{action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer}};
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update, 
@@ -19,6 +19,11 @@ pub enum MapSection {
     BridgeLeft,
     BridgeRight,
     OldHouse,
+}
+
+
+pub struct EventProgress {
+    has_gone_bridge_section: bool,
 }
 
 #[derive(Component, Debug)]
@@ -39,7 +44,7 @@ impl TranstionBetweenSections {
 }
 
 // Dialogue when the game first starts. The game is in pause state when dialogue is in action
-pub fn start_dialogue(mut commands: Commands, project: Res<YarnProject>) {
+pub fn start_dialogue(mut commands: Commands, project: Res<YarnProject>) { 
     let mut dialogue_runner = project.create_dialogue_runner(&mut commands);
 
     dialogue_runner.start_node("WakeUp");
@@ -52,6 +57,7 @@ pub fn player_transition_between_sections(
     mut transition_query: Query<(&Transform, &mut TranstionBetweenSections), (Without<Camera>, Without<MovementController>)>,
     mut player_query: Query<&mut Transform, (With<MovementController>, Without<Camera>)>,
     mut camera_query: Query<&mut Transform, (With<Camera>, Without<MovementController>)>,
+    mut commands: Commands, project: Res<YarnProject>,
 ) {
     let Ok(mut player_transform) = player_query.single_mut() else {
         return;

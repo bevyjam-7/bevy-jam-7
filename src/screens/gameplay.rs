@@ -26,7 +26,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnExit(Screen::Gameplay), (close_menu, unpause));
     app.add_systems(
         OnEnter(Menu::None),
-        unpause.run_if(in_state(Screen::Gameplay)),
+        pause.run_if(in_state(Screen::Gameplay)),
     );
 }
 
