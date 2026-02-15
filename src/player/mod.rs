@@ -6,7 +6,7 @@
 use bevy::prelude::*;
 
 pub mod animation;
-mod action;
+pub mod action;
 pub mod player;
 pub mod player_ghost;
 mod asleep;

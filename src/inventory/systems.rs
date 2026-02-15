@@ -3,7 +3,8 @@ use bevy::prelude::*;
 use crate::{inventory::inventory::{Inventory, ItemKind, ObjectPickable}, map::object::spawn_object, player::player::Player};
 
 pub(super) fn plugin(app: &mut App) {
-    app;
+    app.add_systems(Startup, setup_inventory_ui)
+        .add_systems(Update, update_inventory_ui);
 }
 
 #[derive(EntityEvent)]
@@ -40,11 +41,26 @@ pub fn drop_item(
 
         inventory.remove(item_to_drop);
         commands.spawn(dropped_item);
-    } else {
-        info!("No item to drop");
+        return;
+    } 
+
+    if let Some(item_to_drop) = inventory.get(ItemKind::Object1) {
+        println!("Dropping item: {}", ItemKind::Object1);
+        
+        let dropped_item = spawn_object(
+            item_to_drop,
+            player_pos + Vec3::new(0., 0., 1.),
+            meshes.add(Rectangle::new(40., 15.)),
+            materials.add(ColorMaterial::from(Color::srgb(0.55, 0.27, 0.07))), // Brown color
+        );
+        
+        println!("Dropped item at position: {:?}", player_pos + Vec3::new(0., 0., 1.));
+        inventory.remove(item_to_drop);
+        commands.spawn(dropped_item);
         return;
     }
-    
+
+    info!("No item to drop")
 }
 
 /// System that checks for and processes item pickups.
@@ -86,4 +102,43 @@ pub fn handle_pickups(
             kind, count, inventory.summary()
         );
     }
+}
+
+#[derive(Component)]
+struct InventoryText;
+
+fn setup_inventory_ui(
+    mut commands: Commands,
+) {
+    commands.spawn((
+        Text::new("Items Collectd: "),
+    TextFont {
+        font_size: 20.0,
+        ..default()
+    },
+    TextColor(Color::srgb(1.0, 1.0, 1.0)),
+    Node{
+        position_type: PositionType::Absolute,
+        top: Val::Px(10.0),
+        left: Val::Px(10.0),
+        ..default()
+    },
+    InventoryText,
+    ));
+}
+
+fn update_inventory_ui(
+   inventory: Res<Inventory>,
+   mut query: Query<&mut Text, With<InventoryText>>, 
+) {
+    if !inventory.is_changed() {
+        return;
+    }
+
+    let Ok(mut text) = query.single_mut() else{
+        return;
+    };
+    let items_text = inventory.summary();
+
+    **text = format!("Items Collected: {}", items_text);
 }

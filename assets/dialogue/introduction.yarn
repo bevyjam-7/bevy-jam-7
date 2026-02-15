@@ -1,19 +1,61 @@
 title: WakeUp
-position: 468,16
+position: 330,30
 ---
 It's been a couple of days since you last saw your cat. You are beginning to become a bit worried.
 You feel like she might be over the bridge connected to the old abandoned house.
 ===
-title: BridgeChecked
-position: 427,191
+title: BridgeLeft
+position: 335,187
 ---
-You check the bridge, and notice the muddy paw prints which lead over the the other side.
-However, the bridge is broken so you can't cross it.
-(Press space to change into a ghost.)
+<<if get_progress_bool(0) == false>>
+    You check the bridge, and notice the muddy paw prints which lead over the the other side.
+    However, the bridge is broken so you can't cross it.
+    (Press space to change into a ghost.)
+<<endif>>
 ===
 title: GhostForm
-position: 441,353
+position: 335,352
 ---
-You transform into a ghost and are now able to cross the bridge. However, you need to leave your body behind.
-(Press space when you are near your body to return to it.)
+<<if get_progress_bool(1) == false>>
+    You transform into a ghost and are now able to cross the bridge. However, you need to leave your body behind.
+    (Press space when you are near your body to return to it.)
+    <<set_progress_bool 0>>
+    <<set_progress_bool 1>>
+<<endif>>
+===
+title: OldHouse
+position: 334,497
+---
+<<if get_progress_bool(2) == false>>
+    Entering the very finished old house, you encounter a weird looking fellow in the corner of the room.
+    ???: Hey kid, come over here and press "T" to interact with me!
+<<endif>>
+===
+title: TalkNpc
+position: 333,654
+---
+<<if get_progress_bool(5)>>
+
+    <<jump NpcGotBread>>
+
+<<endif>>
+
+
+<<if get_progress_bool(3) == false>>
+    ???: It's nice to see another face, I've been alone for.. eh why does that matter.
+    ???: Have I seen a cat passing by? Well for a matter of fact I have, she just crawled right behind that bookshelf up there.
+    (Maybe I can push it if I interact with it by pressing "T"?)
+    <<set_progress_bool 2>>
+    <<set_progress_bool 3>>
+<<else>>
+    ???: Well, it was worth a try, but alas a ghost cannot physically interact with the world.
+    ???: I'll tell you what, I've had a hankering for a ""BLACK BOX"" for a while now
+    ???: if you manage one to me, maybe I can help you get your physical form here
+    (I remember I left a ""BLACK BOX"" back at home!)
+<<endif>>
+===
+title: NpcGotBread
+position: 621,616
+---
+
 ===

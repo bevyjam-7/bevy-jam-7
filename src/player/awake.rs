@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::player::{PlayerState, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::GhostPlayer};
+use crate::{game_consts::PLAYER_SPEED, player::{PlayerState, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::GhostPlayer}};
 use::leafwing_input_manager::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
@@ -27,7 +27,7 @@ fn restore_player_movement(
         commands.entity(entity)
             .insert((
                 MovementController {
-                    max_speed: 100.0,
+                    max_speed: PLAYER_SPEED,
                     ..default()
                 },
 
@@ -35,5 +35,5 @@ fn restore_player_movement(
                 PlayerAction::default_input_map(),
             ));
     }
-    println!("\nRestored movement and input to player");
+    info!("\nRestored movement and input to player");
 }

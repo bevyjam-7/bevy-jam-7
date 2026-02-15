@@ -2,18 +2,15 @@
 
 use bevy::{
     image::{ImageLoaderSettings, ImageSampler},
-    prelude::*,
+    prelude::*, sprite::Anchor,
 };
 
 use leafwing_input_manager::prelude::*;
 
 use crate::{
-    AppSystems, PausableSystems,
-    asset_tracking::LoadResource,
-    player::{
-        animation::{PlayerAnimation, FacingDirection},
-        action::{MovementController, PlayerAction},
-    },
+    AppSystems, PausableSystems, asset_tracking::LoadResource, game_consts::PLAYER_SPEED, map::physics::GameLayer, player::{
+        action::{MovementController, PlayerAction, TouchingBrokenBridge}, animation::{FacingDirection, PlayerAnimation}
+    }
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -21,8 +18,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
 }
 
-#[derive(EntityEvent)]
-struct PickupEvent(Entity);
+use avian2d::prelude::*;
 
 /// The player character.
 pub fn player(
@@ -36,11 +32,11 @@ pub fn player(
     let layout = TextureAtlasLayout::from_grid(UVec2::splat(64), 4, 4, Some(UVec2::splat(1)), None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new(facing);
-
     
     (
         Name::new("Player"),
         Player,
+        TouchingBrokenBridge::default(),
         Sprite::from_atlas_image(
             player_assets.ducky.clone(),
             TextureAtlas {
@@ -50,11 +46,24 @@ pub fn player(
         ),
         Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
         PlayerAction::default_input_map(),
+        RigidBody::Dynamic,
+        LockedAxes::ROTATION_LOCKED,
+        Collider::rectangle(30., 20.),
+        CollisionLayers::new(
+            GameLayer::Player,
+            [
+                GameLayer::Default,
+                GameLayer::Border,
+                GameLayer::BrokenBridge,
+            ],
+        ),
+        LinearVelocity::default(),
         ActionTimer {
             timer: Timer::from_seconds(0.5, TimerMode::Once)
         },
+        Anchor::BOTTOM_CENTER,
         MovementController {
-            max_speed,
+            max_speed: PLAYER_SPEED,
             ..default()
         },
         player_animation,
