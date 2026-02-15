@@ -3,7 +3,7 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, Y_BRIDGE_SECTION_BORDER_OFFSETS}, map::{animation::HouseAnimation, borders::{spawn_box_borders, spawn_broken_bridge_collision}, events::{MapSection, TranstionBetweenSections}, npc::{NpcAssets, spawn_npc}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
+    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, PLAYER_SPEED, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, Y_BRIDGE_SECTION_BORDER_OFFSETS}, map::{animation::HouseAnimation, borders::{spawn_box_borders, spawn_broken_bridge_collision}, events::{MapSection, TranstionBetweenSections}, npc::{NpcAssets, spawn_npc}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -74,7 +74,7 @@ pub fn spawn_level(
             &mut meshes,
             &mut materials,
         ));
-        children.spawn(player(5000.0, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down));
+        children.spawn(player(PLAYER_SPEED, &player_assets, &mut texture_atlas_layouts, FacingDirection::Down));
         children.spawn(spawn_object(
             crate::inventory::inventory::ItemKind::Food1,
             Vec3::new(0., 200., 10.),
