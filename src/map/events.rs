@@ -57,7 +57,6 @@ pub fn player_transition_between_sections(
     mut transition_query: Query<(&Transform, &mut TranstionBetweenSections), (Without<Camera>, Without<MovementController>)>,
     mut player_query: Query<&mut Transform, (With<MovementController>, Without<Camera>)>,
     mut camera_query: Query<&mut Transform, (With<Camera>, Without<MovementController>)>,
-    mut commands: Commands, project: Res<YarnProject>,
 ) {
     let Ok(mut player_transform) = player_query.single_mut() else {
         return;
