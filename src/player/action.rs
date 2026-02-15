@@ -20,7 +20,7 @@ use leafwing_input_manager::prelude::*;
 use crate::game_consts::PLAYER_SPEED;
 use crate::inventory::inventory::ItemKind;
 use crate::map::borders::BrokenBridgeCollider;
-use crate::map::events::{BreadOnTeleporterB};
+use crate::map::events::{BreadOnTeleporterB, DialogueSelected};
 use crate::map::npc::NpcInteractionBox;
 use crate::screens::Screen::{self, Gameplay};
 use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer}}};
@@ -304,13 +304,7 @@ fn talk_to_npc(
     mut commands: Commands,
     action_state: Query<&ActionState<PlayerAction>, Or<(With<Player>, With<GhostPlayer>)>>,
     interaction_boxes: Query<&NpcInteractionBox>,
-    mut has_spoken_bread: Local<bool>,
-    mut bread_delivered: Local<bool>, // Add this to track if bread was delivered
-    bread_state: Res<BreadOnTeleporterB>,
-    bread_query: Query<(Entity, &ObjectPickable, &Transform, Option<&Teleportable>)>,
-    mut teleporter_query: Query<(Entity, &Transform, &mut Teleporter)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+
 ) {
     let Ok(action_state) = action_state.single() else {
         return;
@@ -319,55 +313,7 @@ fn talk_to_npc(
     if action_state.just_pressed(&PlayerAction::Interact) {
         for interaction_box in interaction_boxes.iter() {
             if interaction_box.can_talk {
-                info!("\nTalking to NPC!");
-                
-                // Check if bread was already delivered
-                if *bread_delivered {
-                    info!("NPC: Thanks again for the bread!");
-                    break;
-                }
-                
-                if bread_state.is_present {
-                    if !*has_spoken_bread {
-                        info!("NPC: Oh, you brought the bread! Here's your reward!");
-                        *has_spoken_bread = true;
-                        *bread_delivered = true; // Mark bread as delivered
-                        
-                        // Find and despawn the bread
-                        for (entity, pickable, transform, teleportable) in &bread_query {
-                            if pickable.kind == ItemKind::Food1 {
-                                let bread_position = transform.translation;
-                                
-                                // Unlink from teleporter if it's on one
-                                if let Some(tp) = teleportable {
-                                    if let Ok((_, _, mut teleporter)) = teleporter_query.get_mut(tp.on_teleporter_entity) {
-                                        teleporter.containing_entity = Entity::PLACEHOLDER;
-                                        info!("\nUnlinked bread from teleporter before despawning");
-                                    }
-                                }
-                                
-                                // Despawn the bread
-                                commands.entity(entity).despawn();
-                                
-                                // Spawn reward immediately
-                                spawn_reward_item(
-                                    &mut commands,
-                                    bread_position,
-                                    &mut meshes,
-                                    &mut materials,
-                                );
-                                
-                                break;
-                            }
-                        }
-                    } else {
-                        info!("NPC: Thanks again for the bread!");
-                    }
-                } else {
-                    info!("NPC: Please bring me some bread.");
-                }
-                
-                break;
+                commands.trigger(DialogueSelected { s: "TalkNpc".to_string() });
             }
         }
     }
@@ -432,7 +378,7 @@ fn detect_broken_bridge_collision(
     for hit_entity in hits {
         if broken_bridge_query.get(hit_entity).is_ok() {
             touching.is_touching = true;
-            info!("✓ Player IS touching broken bridge!");
+            // info!("✓ Player IS touching broken bridge!");
             break;
         }
     }

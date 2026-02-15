@@ -1,8 +1,10 @@
+use std::string;
+
 use bevy::{ecs::system::command, math::ops::sqrt, prelude::*};
 use bevy_yarnspinner::prelude::*;
 use bevy_yarnspinner_example_dialogue_view::prelude::*;
 
-use crate::{AppSystems, PausableSystems, Pause, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_PROXIMITY_RADIUS, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_LOCATION}, inventory::inventory::{ItemKind, ObjectPickable}, map::{npc::{NpcInteractionBox, PlayerOnInteractionBox}, teleporter::{Teleportable, Teleporter}}, player::{action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer}};
+use crate::{AppSystems, PausableSystems, Pause, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_PROXIMITY_RADIUS, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_LOCATION}, inventory::inventory::{ItemKind, ObjectPickable}, map::{level::Level, npc::{NpcInteractionBox, PlayerOnInteractionBox}, teleporter::{Teleportable, Teleporter}}, player::{action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer}};
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<BreadOnTeleporterB>()
         .add_systems(
@@ -14,7 +16,7 @@ pub(super) fn plugin(app: &mut App) {
             ) 
             .chain()
             .in_set(PausableSystems),
-        );
+        ).add_observer(run_dialogue);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -47,12 +49,96 @@ impl TranstionBetweenSections {
     }
 }
 
-// Dialogue when the game first starts. The game is in pause state when dialogue is in action
-pub fn start_dialogue(mut commands: Commands, project: Res<YarnProject>) { 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Event)]
+pub struct DialogueSelected{
+    pub s: String,
+}
+
+pub fn run_dialogue(
+    node: On<DialogueSelected>,
+    mut commands: Commands, project: Res<YarnProject>
+) {
     let mut dialogue_runner = project.create_dialogue_runner(&mut commands);
 
-    dialogue_runner.start_node("WakeUp");
+    dialogue_runner
+        .commands_mut()
+        .add_command("set_progress_bool", commands.register_system(set_progress_bool));
+    dialogue_runner
+        .library_mut()
+        .add_function("get_progress_bool", commands.register_system(get_progress_bool));
+    dialogue_runner.start_node(node.s.clone());
     commands.spawn(dialogue_runner);
+}
+
+// Everything dealing this ts is not pretty but it works, shield your eyes
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Component)]
+pub struct GameProgressTracker {
+    pub first_entry_bridge: bool,
+    pub first_entry_ghost: bool,
+    pub first_entry_old_house: bool,
+    pub first_talk_npc: bool,
+    pub returned_home_after_talk_npc: bool,
+    pub bread_in_old_house: bool,
+}
+
+impl Default for GameProgressTracker {
+    fn default() -> Self {
+        GameProgressTracker { 
+            first_entry_bridge: false, 
+            first_entry_ghost: false, 
+            first_entry_old_house: false, 
+            first_talk_npc: false, 
+            returned_home_after_talk_npc: false, 
+            bread_in_old_house: false, 
+        }
+    }
+}
+#[derive(Resource)]
+struct YarnSpinnerSpecificCheck {
+    int: u32,
+}
+
+pub fn get_progress_bool (
+    In(num): In<(u32)>,
+    mut game_progress: Query<&mut GameProgressTracker>
+) -> bool {
+    let Ok(progress) = game_progress.single_mut() else {
+        return false;
+    };
+    match num {
+        0 => progress.first_entry_bridge,
+        1 => progress.first_entry_ghost,
+        2 => progress.first_entry_old_house,
+        3 => progress.first_talk_npc,
+        4 => progress.returned_home_after_talk_npc,
+        5 => progress.bread_in_old_house,
+        _ => false,
+    }
+}
+
+pub fn set_progress_bool (
+    In(int): In<u32>,
+    mut game_progress: Query<&mut GameProgressTracker>
+) -> bool {
+    let Ok(mut progress) = game_progress.single_mut() else {
+        return false;
+    };
+
+    match int {
+        0 => progress.first_entry_bridge = true,
+        1 => progress.first_entry_ghost = true,
+        2 => progress.first_entry_old_house = true,
+        3 => progress.first_talk_npc = true,
+        4 => progress.returned_home_after_talk_npc = true,
+        5 => progress.bread_in_old_house = true,
+        _ => return false,
+    }
+    true
+}
+
+// Dialogue when the game first starts. The game is in pause state when dialogue is in action
+pub fn start_dialogue(mut commands: Commands) { 
+    commands.trigger(DialogueSelected { s: "WakeUp".to_string() });   
 }
 
 // A system that checks if the player is within a certain radius of a tripwire, and if so, teleports the player to the next section.
@@ -61,6 +147,7 @@ pub fn player_transition_between_sections(
     mut transition_query: Query<(&Transform, &mut TranstionBetweenSections), (Without<Camera>, Without<MovementController>)>,
     mut player_query: Query<&mut Transform, (With<MovementController>, Without<Camera>)>,
     mut camera_query: Query<&mut Transform, (With<Camera>, Without<MovementController>)>,
+    mut commands: Commands,
 ) {
     let Ok(mut player_transform) = player_query.single_mut() else {
         return;
@@ -81,10 +168,12 @@ pub fn player_transition_between_sections(
                 MapSection::WitchHouse => {
                     player_transform.translation = TRIPWIRE_HOUSE_TO_BRIDGE_POSITION + Vec3::new(-50., 0., 0.);
                     camera_transform.translation = WITCH_HOUSE_LOCATION;
+                    
                 },
                 MapSection::BridgeLeft => {
                     player_transform.translation = TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION + Vec3::new(50., 0., 0.);
                     camera_transform.translation = BRIDGE_SECTION_LOCATION;
+                    commands.trigger(DialogueSelected { s: "BridgeLeft".to_string() });
                 },
                 MapSection::BridgeRight => {
                     player_transform.translation = TRIPWIRE_BRIDGE_TO_OLD_POSITION + BRIDGE_SECTION_LOCATION + Vec3::new(-50., 0., 0.);
@@ -93,6 +182,7 @@ pub fn player_transition_between_sections(
                 MapSection::OldHouse => {
                     player_transform.translation = TRIPWIRE_OLD_TO_BRIDGE_POSITION + OLD_HOUSE_LOCATION + Vec3::new(50., 0., 0.);
                     camera_transform.translation = OLD_HOUSE_LOCATION;
+                    commands.trigger(DialogueSelected { s: "OldHouse".to_string() });
                 }
             }
             info!("Player transitioned to section: {:?}", transtion_section.next_section);

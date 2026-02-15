@@ -1,7 +1,7 @@
 use avian2d::prelude::LinearVelocity;
 use bevy::prelude::*;
 
-use crate::{game_consts::PLAYER_SPEED, player::{PlayerState, action::{MovementController, PlayerAction}, animation::{PlayerAnimation, PlayerAnimationState}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}}};
+use crate::{game_consts::PLAYER_SPEED, map::events::DialogueSelected, player::{PlayerState, action::{MovementController, PlayerAction}, animation::{PlayerAnimation, PlayerAnimationState}, player::Player, player_ghost::player_ghost::{GhostPlayerAssets, ghost_player}}};
 use leafwing_input_manager::prelude::*;
 use crate::map::level::Level;
 
@@ -58,6 +58,7 @@ fn spawn_ghost_player(
             info!("\nSpawned ghost player as child of level entity");
         }
     }
+    commands.trigger(DialogueSelected { s: "GhostForm".to_string() });
 }
 // Reset player animation to idle when falling asleep
 fn reset_player_animation_to_idle(
