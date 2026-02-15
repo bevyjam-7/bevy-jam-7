@@ -14,13 +14,16 @@
 //! consider using a [fixed timestep](https://github.com/bevyengine/bevy/blob/main/examples/movement/physics_in_fixed_timestep.rs).
 
 use avian2d::math::AdjustPrecision;
-use avian2d::prelude::LinearVelocity;
+use avian2d::prelude::{Collider, LinearVelocity, SpatialQuery, SpatialQueryFilter};
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 use crate::game_consts::PLAYER_SPEED;
-use crate::player::action;
-use crate::screens::Screen::Gameplay;
-use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer, GhostPlayerAssets}}};
+use crate::inventory::inventory::ItemKind;
+use crate::map::borders::BrokenBridgeCollider;
+use crate::map::events::{BreadOnTeleporterB};
+use crate::map::npc::NpcInteractionBox;
+use crate::screens::Screen::{self, Gameplay};
+use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer}}};
 use crate::map::teleporter::Teleportable;
 
 pub(super) fn plugin(app: &mut App) {
@@ -33,7 +36,15 @@ pub(super) fn plugin(app: &mut App) {
     );
     
     app.add_systems(Update, 
-        (apply_state_switch, pick_up_item_action, drop_item_action, teleport_entity)
+        (
+            apply_state_switch, 
+            pick_up_item_action, 
+            drop_item_action, 
+            teleport_entity, 
+            talk_to_npc,
+            detect_broken_bridge_collision,
+            fix_bridge,
+        )
         .chain()
         .in_set(AppSystems::RecordInput)
         .in_set(PausableSystems)
@@ -50,6 +61,7 @@ pub enum PlayerAction {
     Teleport,
     Pickup,
     Drop,
+    Interact,
 }
 
 impl PlayerAction {
@@ -64,6 +76,7 @@ impl PlayerAction {
         input_map.insert(Self::Teleport, GamepadButton::East);
         input_map.insert(Self::Pickup, GamepadButton::West);
         input_map.insert(Self::Drop, GamepadButton::North);
+        input_map.insert(Self::Interact , GamepadButton::DPadUp);
 
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
@@ -74,11 +87,10 @@ impl PlayerAction {
         input_map.insert(Self::Teleport, KeyCode::KeyQ);
         input_map.insert(Self::Pickup, KeyCode::KeyE);
         input_map.insert(Self::Drop, KeyCode::KeyF);
+        input_map.insert(Self::Interact , KeyCode::KeyT);
         
         input_map
     }
-
-    
 }
 
 fn drop_item_action(
@@ -127,7 +139,7 @@ fn teleport_entity(
         };
         
         if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
-            info!("Buddy teleporter occupied by entity {:?}, cannot teleport", buddy_teleporter.containing_entity);
+            info!("\nBuddy teleporter occupied by entity {:?}, cannot teleport", buddy_teleporter.containing_entity);
             continue;
         }
         
@@ -158,7 +170,7 @@ fn teleport_entity(
         });
         commands.entity(item_entity).insert(Transform::from_translation(destination));
         
-        info!("Teleported item {:?} to {:?}", item_entity, destination);
+        info!("\nTeleported item {:?} to {:?}", item_entity, destination);
     }
 }
 
@@ -179,7 +191,7 @@ fn pick_up_item_action(
                     // Item is on a teleporter - unlink it first
                     if let Ok(mut teleporter) = teleporter_query.get_mut(teleportable.on_teleporter_entity) {
                         teleporter.containing_entity = Entity::PLACEHOLDER;
-                        info!("Cleared teleporter before pickup");
+                        info!("\nCleared teleporter before pickup");
                     }
                     commands.entity(entity).remove::<Teleportable>();
                 }
@@ -189,6 +201,7 @@ fn pick_up_item_action(
         }
     }
 }
+
 
 fn apply_state_switch(
     player_state: ResMut<State<PlayerState>>,
@@ -286,5 +299,191 @@ impl Default for MovementController {
             // 400 pixels per second is a nice default, but we can still vary this per character.
             max_speed: PLAYER_SPEED,
         }
+    }
+}
+
+// NPC related actions
+fn talk_to_npc(
+    mut commands: Commands,
+    action_state: Query<&ActionState<PlayerAction>, Or<(With<Player>, With<GhostPlayer>)>>,
+    interaction_boxes: Query<&NpcInteractionBox>,
+    mut has_spoken_bread: Local<bool>,
+    mut bread_delivered: Local<bool>, // Add this to track if bread was delivered
+    bread_state: Res<BreadOnTeleporterB>,
+    bread_query: Query<(Entity, &ObjectPickable, &Transform, Option<&Teleportable>)>,
+    mut teleporter_query: Query<(Entity, &Transform, &mut Teleporter)>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    let Ok(action_state) = action_state.single() else {
+        return;
+    };
+    
+    if action_state.just_pressed(&PlayerAction::Interact) {
+        for interaction_box in interaction_boxes.iter() {
+            if interaction_box.can_talk {
+                info!("\nTalking to NPC!");
+                
+                // Check if bread was already delivered
+                if *bread_delivered {
+                    info!("NPC: Thanks again for the bread!");
+                    break;
+                }
+                
+                if bread_state.is_present {
+                    if !*has_spoken_bread {
+                        info!("NPC: Oh, you brought the bread! Here's your reward!");
+                        *has_spoken_bread = true;
+                        *bread_delivered = true; // Mark bread as delivered
+                        
+                        // Find and despawn the bread
+                        for (entity, pickable, transform, teleportable) in &bread_query {
+                            if pickable.kind == ItemKind::Food1 {
+                                let bread_position = transform.translation;
+                                
+                                // Unlink from teleporter if it's on one
+                                if let Some(tp) = teleportable {
+                                    if let Ok((_, _, mut teleporter)) = teleporter_query.get_mut(tp.on_teleporter_entity) {
+                                        teleporter.containing_entity = Entity::PLACEHOLDER;
+                                        info!("\nUnlinked bread from teleporter before despawning");
+                                    }
+                                }
+                                
+                                // Despawn the bread
+                                commands.entity(entity).despawn();
+                                
+                                // Spawn reward immediately
+                                spawn_reward_item(
+                                    &mut commands,
+                                    bread_position,
+                                    &mut meshes,
+                                    &mut materials,
+                                );
+                                
+                                break;
+                            }
+                        }
+                    } else {
+                        info!("NPC: Thanks again for the bread!");
+                    }
+                } else {
+                    info!("NPC: Please bring me some bread.");
+                }
+                
+                break;
+            }
+        }
+    }
+}
+
+// function to spawn the reward item
+fn spawn_reward_item(
+    commands: &mut Commands,
+    position: Vec3,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+) {
+    // Spawn a Bridge Piece
+    let reward_mesh = meshes.add(Rectangle::new(40.0, 15.0)); // Bridge-like shape
+    let reward_material = materials.add(ColorMaterial::from(Color::srgb(0.55, 0.27, 0.07))); // Brown/wood color
+    
+    commands.spawn((
+        Name::new("Bridge Piece"),
+        ObjectPickable::new(ItemKind::Object1),
+        Transform::from_translation(position),
+        GlobalTransform::default(),
+        Mesh2d(reward_mesh),
+        MeshMaterial2d(reward_material),
+        DespawnOnExit(Screen::Gameplay), // Add if needed
+    ));
+    
+    info!("Spawned Bridge Piece at position: {:?}", position);
+}
+
+// Component to track if player is touching broken bridge
+#[derive(Component, Default)]
+pub struct TouchingBrokenBridge {
+    pub is_touching: bool,
+}
+
+
+// System to detect collision with broken bridge using spatial queries
+fn detect_broken_bridge_collision(
+    spatial_query: SpatialQuery,
+    player_query: Query<(Entity, &Transform, &Collider), With<Player>>,
+    mut touching_query: Query<&mut TouchingBrokenBridge, With<Player>>,
+    broken_bridge_query: Query<Entity, With<BrokenBridgeCollider>>,
+) {
+    let Ok((player_entity, player_transform, player_collider)) = player_query.single() else {
+        return;
+    };
+    
+    let Ok(mut touching) = touching_query.single_mut() else {
+        return;
+    };
+    
+    // Use shape casting to check for overlap
+    let hits = spatial_query.shape_intersections(
+        player_collider,
+        player_transform.translation.truncate(),
+        player_transform.rotation.to_euler(EulerRot::XYZ).2,
+        &SpatialQueryFilter::default(),
+    );
+    
+    touching.is_touching = false;
+    
+    for hit_entity in hits {
+        if broken_bridge_query.get(hit_entity).is_ok() {
+            touching.is_touching = true;
+            info!("✓ Player IS touching broken bridge!");
+            break;
+        }
+    }
+}
+
+// Function to fix bridge using bridge piece
+fn fix_bridge(
+    mut commands: Commands,
+    action_state: Query<&ActionState<PlayerAction>, With<Player>>,
+    mut inventory: ResMut<Inventory>,
+    touching_query: Query<&TouchingBrokenBridge, With<Player>>,
+    broken_bridge_query: Query<Entity, With<BrokenBridgeCollider>>,
+) {
+    let Ok(action_state) = action_state.single() else {
+        return;
+    };
+    
+    let Ok(touching) = touching_query.single() else {
+        info!("Could not get touching query");
+        return;
+    };
+    
+    // Check if player pressed the interact button (T key)
+    if action_state.just_pressed(&PlayerAction::Interact) {
+        info!("Interact pressed! Touching: {}", touching.is_touching);
+        
+        // Check if player is touching broken bridge
+        if !touching.is_touching {
+            return;
+        }
+        
+        // Check if player has bridge piece in inventory
+        if inventory.get(ItemKind::Object1).is_none() {
+            info!("You need a bridge piece to fix this!");
+            return;
+        }
+        
+        info!("Fixing the bridge!");
+        
+        // Remove bridge piece from inventory
+        inventory.remove(ItemKind::Object1);
+        
+        // Despawn all broken bridge colliders
+        for bridge_entity in &broken_bridge_query {
+            commands.entity(bridge_entity).despawn();
+            info!("Despawned broken bridge: {:?}", bridge_entity);
+        }
+        
+        info!("Bridge fixed! The way is now clear.");
     }
 }

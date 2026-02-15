@@ -14,7 +14,7 @@ pub fn spawn_npc(
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let npc_animation = NpcAnimation::new();
     (
-        Name::new("Npc"),
+        Name::new("Npc"),   
         Npc,
         Sprite::from_atlas_image(
             npc_assets.npc.clone(), 
@@ -32,10 +32,40 @@ pub fn spawn_npc(
     )
 }
 
+// Bundle for the interaction box under npc
+pub fn interaction_box_bundle() -> impl Bundle {
+    let box_size = Vec2::new(50.0, 32.0);
+    (
+        NpcInteractionBox {
+            can_talk: false,
+            size: box_size,
+        },
+        Sprite {
+            color: Color::srgba(0.0, 1.0, 0.0, 0.5),
+            custom_size: Some(box_size),
+            ..default()
+        },
+        Transform::from_xyz(-43.0, -48.0, 0.0),
+    )
+}
+
+
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
 pub struct Npc;
+
+#[derive(Component)]
+pub struct NpcInteractionBox {
+    pub can_talk: bool,
+    pub size: Vec2,
+}
+
+#[derive(Event)]
+pub struct PlayerOnInteractionBox {
+    pub player: Entity,
+    pub box_entity: Entity,
+}
 
 #[derive(Resource, Asset, Clone, Reflect)]
 #[reflect(Resource)]
@@ -57,3 +87,4 @@ impl FromWorld for NpcAssets {
         }
     }
 }
+

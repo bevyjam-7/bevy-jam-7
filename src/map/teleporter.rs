@@ -39,12 +39,12 @@ fn link_object_to_tp(
     teleporter_query: &mut Query<(Entity, &Transform, &mut Teleporter)>,
 ) {
     let Ok((_, _, mut teleporter)) = teleporter_query.get_mut(teleporter_entity) else {
-        info!("Teleporter entity not found");
+        info!("\nTeleporter entity not found");
         return;
     };
     
     if teleporter.containing_entity != Entity::PLACEHOLDER {
-        info!("Teleporter is already occupied, cannot link object.");
+        info!("\nTeleporter is already occupied, cannot link object.");
         return;
     }
     
@@ -53,7 +53,7 @@ fn link_object_to_tp(
     });
     
     teleporter.containing_entity = entity;
-    info!("Linked entity {:?} to teleporter {:?}", entity, teleporter_entity);
+    info!("\nLinked entity {:?} to teleporter {:?}", entity, teleporter_entity);
 }
 
 fn unlink_object_from_tp(
@@ -63,18 +63,18 @@ fn unlink_object_from_tp(
     teleporter_query: &mut Query<(Entity, &Transform, &mut Teleporter)>,
 ) {
     let Ok((_, _, mut teleporter)) = teleporter_query.get_mut(teleporter_entity) else {
-        info!("Teleporter entity not found");
+        info!("\nTeleporter entity not found");
         return;
     };
     
     if teleporter.containing_entity != entity {
-        info!("Entity is not on this teleporter, cannot unlink.");
+        info!("\nEntity is not on this teleporter, cannot unlink.");
         return;
     }
     
     commands.entity(entity).remove::<Teleportable>();
     teleporter.containing_entity = Entity::PLACEHOLDER;
-    info!("Unlinked entity {:?} from teleporter {:?}", entity, teleporter_entity);
+    info!("\nUnlinked entity {:?} from teleporter {:?}", entity, teleporter_entity);
 }
 
 
@@ -149,7 +149,7 @@ fn player_near_teleporter(
             let distance = player_transform.translation.distance(teleporter_transform.translation);
             if distance < TELEPORTER_PROXIMITY_RADIUS {
                 teleporter.can_teleport = true;
-                info!("Ghost player is near teleporter, can teleport.");
+                info!("\nGhost player is near teleporter, can teleport.");
                 // Don't return here - let it check all teleporters in case player is near multiple
             }
         }
@@ -163,16 +163,16 @@ impl Teleporter {
         mut teleporter_query: Query<(&Transform, &mut Teleporter)>
     ) {
         if self.containing_entity == Entity::PLACEHOLDER && self.can_teleport {
-            info!("Teleporter has no containing entity or cannot teleport.");
+            info!("\nTeleporter has no containing entity or cannot teleport.");
             return; // No entity to teleport.
         }
         let Ok((buddy_transform, mut buddy_teleporter)) = teleporter_query.get_mut(self.tele_buddy) else {
-            info!("Buddy teleporter doesn't exist.");
+            info!("\nBuddy teleporter doesn't exist.");
             return; // Buddy teleporter doesn't exist.
         };
         // Check if buddy teleporter is currently occupied, if so, do not teleport.
         if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
-            info!("Buddy teleporter is currently occupied, cannot teleport.");
+            info!("\nBuddy teleporter is currently occupied, cannot teleport.");
             return; // Buddy teleporter is currently occupied.
         }
         let teleporter_item = self.containing_entity;
