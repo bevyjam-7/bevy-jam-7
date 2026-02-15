@@ -8,8 +8,8 @@ use bevy::{
 use leafwing_input_manager::prelude::*;
 
 use crate::{
-    AppSystems, PausableSystems, asset_tracking::LoadResource, map::physics::GameLayer, player::{
-        action::{MovementController, PlayerAction}, animation::{FacingDirection, PlayerAnimation}
+    AppSystems, PausableSystems, asset_tracking::LoadResource, game_consts::PLAYER_SPEED, map::physics::GameLayer, player::{
+        action::{MovementController, PlayerAction, TouchingBrokenBridge}, animation::{FacingDirection, PlayerAnimation}
     }
 };
 
@@ -36,6 +36,7 @@ pub fn player(
     (
         Name::new("Player"),
         Player,
+        TouchingBrokenBridge::default(),
         Sprite::from_atlas_image(
             player_assets.ducky.clone(),
             TextureAtlas {
@@ -62,7 +63,7 @@ pub fn player(
         },
         Anchor::BOTTOM_CENTER,
         MovementController {
-            max_speed,
+            max_speed: PLAYER_SPEED,
             ..default()
         },
         player_animation,

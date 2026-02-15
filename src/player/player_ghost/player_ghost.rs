@@ -6,7 +6,7 @@ use bevy::{
     prelude::*, sprite::Anchor,
 };
 use crate::{
-    AppSystems, PausableSystems, asset_tracking::LoadResource, map::physics::GameLayer, player::{action::{MovementController, PlayerAction}, player::ActionTimer}
+    AppSystems, PausableSystems, asset_tracking::LoadResource, game_consts::PLAYER_SPEED, map::physics::GameLayer, player::{action::{MovementController, PlayerAction}, player::ActionTimer}
 };
 use super::player_ghost_animation::GhostPlayerAnimation;
 
@@ -53,7 +53,7 @@ pub fn ghost_player(
             timer: Timer::from_seconds(0.5, TimerMode::Once)
         },
         MovementController {
-            max_speed,
+            max_speed: PLAYER_SPEED,
             ..default()
         },
         ghost_player_animation,

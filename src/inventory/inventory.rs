@@ -11,12 +11,14 @@ pub(super) fn plugin(app: &mut App) {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ItemKind {
     Food1,
+    Object1,
 }
 
 impl ItemKind {
     pub fn display_name(&self) -> &'static str {
         match self {
             ItemKind::Food1 => "Bread",
+            ItemKind::Object1 => "Bridge Piece"
         }
     }
 }

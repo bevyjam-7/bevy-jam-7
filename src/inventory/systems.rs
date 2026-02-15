@@ -41,11 +41,26 @@ pub fn drop_item(
 
         inventory.remove(item_to_drop);
         commands.spawn(dropped_item);
-    } else {
-        info!("No item to drop");
+        return;
+    } 
+
+    if let Some(item_to_drop) = inventory.get(ItemKind::Object1) {
+        println!("Dropping item: {}", ItemKind::Object1);
+        
+        let dropped_item = spawn_object(
+            item_to_drop,
+            player_pos + Vec3::new(0., 0., 1.),
+            meshes.add(Rectangle::new(40., 15.)),
+            materials.add(ColorMaterial::from(Color::srgb(0.55, 0.27, 0.07))), // Brown color
+        );
+        
+        println!("Dropped item at position: {:?}", player_pos + Vec3::new(0., 0., 1.));
+        inventory.remove(item_to_drop);
+        commands.spawn(dropped_item);
         return;
     }
-    
+
+    info!("No item to drop")
 }
 
 /// System that checks for and processes item pickups.
