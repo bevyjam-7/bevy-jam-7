@@ -13,4 +13,5 @@ pub enum GameLayer {
     Border,
     Ground,
     BrokenBridge,
+    OldBookshelf,
 }
