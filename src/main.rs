@@ -22,6 +22,8 @@ use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_yarnspinner::prelude::*;
 use bevy_yarnspinner_example_dialogue_view::prelude::*;
 
+use crate::map::level::MapAssets;
+
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
 }
@@ -50,14 +52,13 @@ impl Plugin for AppPlugin {
                     ..default()
                 }),
         );
-
         app.add_plugins((
             YarnSpinnerPlugin::with_yarn_source(YarnFileSource::file("dialogue/introduction.yarn")),
         ));
 
         app.add_plugins(dialogue::plugin);
 
-        
+
         // Add physics
         app.add_plugins(PhysicsPlugins::default().with_length_unit(64.)).insert_resource(Gravity(Vec2::ZERO));
 
@@ -65,13 +66,13 @@ impl Plugin for AppPlugin {
         app.add_plugins((
             asset_tracking::plugin,
             audio::plugin,
-            player::plugin,
             #[cfg(feature = "dev")]
             dev_tools::plugin,
             menus::plugin,
             screens::plugin,
             theme::plugin,
             map::plugin,
+            player::plugin,
             inventory::plugin,
         ));
 

@@ -194,6 +194,7 @@ pub fn bridge_section_map(
     // let bridge_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.)));
     (
         Name::new("Bridge Section"),
+        BridgeSection,
         // Mesh2d(bridge_mesh),
         // MeshMaterial2d(bridge_material),
         Sprite::from_image(
@@ -254,15 +255,19 @@ pub fn teleportation_tripwire_entity(
 #[reflect(Component)]
 struct WitchHouse;
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component)]
+pub struct BridgeSection;
+
 #[derive(Resource, Asset, Clone, Reflect)]
 #[reflect(Resource)]
 pub struct MapAssets {
     #[dependency]
-    witch_house: Handle<Image>,
+    pub witch_house: Handle<Image>,
     #[dependency]
-    broken_bridge: Handle<Image>,
+    pub broken_bridge: Handle<Image>,
     #[dependency]
-    fixed_bridge: Handle<Image>,
+    pub fixed_bridge: Handle<Image>,
 }
 
 impl FromWorld for MapAssets {

@@ -88,4 +88,5 @@ title: NpcGotBread
 position: 621,616
 ---
     ???: Thanks for the bread! Here's a plank that should fix up that old broken bridge.
+    <<set_progress_bool 2>>
 ===

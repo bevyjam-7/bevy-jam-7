@@ -21,6 +21,7 @@ use crate::game_consts::{PLAYER_SPEED, TELEPORTER_B_LOCATION};
 use crate::inventory::inventory::ItemKind;
 use crate::map::borders::BrokenBridgeCollider;
 use crate::map::events::{BreadOnTeleporterB, DialogueSelected, GameProgressTracker, SpawnRewardEvent};
+use crate::map::level::{BridgeSection, MapAssets};
 use crate::map::npc::NpcInteractionBox;
 use crate::screens::Screen::{self, Gameplay};
 use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer}}};
@@ -382,6 +383,8 @@ fn fix_bridge(
     mut inventory: ResMut<Inventory>,
     touching_query: Query<&TouchingBrokenBridge, With<Player>>,
     broken_bridge_query: Query<Entity, With<BrokenBridgeCollider>>,
+    mut bridge_sprite_query: Query<&mut Sprite, With<BridgeSection>>,
+    map_assets: Option<Res<MapAssets>>,
 ) {
     let Ok(action_state) = action_state.single() else {
         return;
@@ -389,6 +392,9 @@ fn fix_bridge(
     
     let Ok(touching) = touching_query.single() else {
         info!("Could not get touching query");
+        return;
+    };
+    let Some(map_assets) = map_assets else {
         return;
     };
     
@@ -413,8 +419,12 @@ fn fix_bridge(
         inventory.remove(ItemKind::Object1);
         
         // Despawn all broken bridge colliders
-        for bridge_entity in &broken_bridge_query {
+        for bridge_entity in &broken_bridge_query { 
             commands.entity(bridge_entity).despawn();
+            let Ok(mut bridge_sprite) = bridge_sprite_query.single_mut() else {
+                return;
+            };
+            bridge_sprite.image = map_assets.fixed_bridge.clone();
             info!("Despawned broken bridge: {:?}", bridge_entity);
         }
         
