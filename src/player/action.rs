@@ -17,10 +17,10 @@ use avian2d::math::AdjustPrecision;
 use avian2d::prelude::{Collider, LinearVelocity, SpatialQuery, SpatialQueryFilter};
 use bevy::{prelude::*, window::PrimaryWindow};
 use leafwing_input_manager::prelude::*;
-use crate::game_consts::PLAYER_SPEED;
+use crate::game_consts::{PLAYER_SPEED, TELEPORTER_B_LOCATION};
 use crate::inventory::inventory::ItemKind;
 use crate::map::borders::BrokenBridgeCollider;
-use crate::map::events::{BreadOnTeleporterB, DialogueSelected};
+use crate::map::events::{BreadOnTeleporterB, DialogueSelected, GameProgressTracker, SpawnRewardEvent};
 use crate::map::npc::NpcInteractionBox;
 use crate::screens::Screen::{self, Gameplay};
 use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer}}};
@@ -84,7 +84,7 @@ impl PlayerAction {
         input_map.insert(Self::Honkshoo, KeyCode::Space);
         input_map.insert(Self::Pickup, KeyCode::KeyE);
         input_map.insert(Self::Drop, KeyCode::KeyR);
-        input_map.insert(Self::Interact , KeyCode::KeyT);
+        input_map.insert(Self::Interact , KeyCode::KeyQ);
         
         input_map
     }
@@ -304,43 +304,34 @@ fn talk_to_npc(
     mut commands: Commands,
     action_state: Query<&ActionState<PlayerAction>, Or<(With<Player>, With<GhostPlayer>)>>,
     interaction_boxes: Query<&NpcInteractionBox>,
-
+    mut game_progress: Query<&mut GameProgressTracker>,
+    bread_query: Query<(Entity, &Teleportable), With<ObjectPickable>>,
+    mut teleporter_query: Query<&mut Teleporter>,
 ) {
     let Ok(action_state) = action_state.single() else {
         return;
     };
-    
+    let Ok(progress) = game_progress.single_mut() else {
+        return;
+    };
     if action_state.just_pressed(&PlayerAction::Interact) {
         for interaction_box in interaction_boxes.iter() {
             if interaction_box.can_talk {
                 commands.trigger(DialogueSelected { s: "TalkNpc".to_string() });
+                if progress.bread_in_old_house {
+                    for (bread, tp) in &bread_query {
+                        commands.entity(bread).despawn();
+                        // Unlinks tp
+                        if let Ok(mut teleporter) = teleporter_query.get_mut(tp.on_teleporter_entity) {
+                            teleporter.containing_entity = Entity::PLACEHOLDER;
+                        }
+
+                        commands.trigger(SpawnRewardEvent);
+                    };
+                }
             }
         }
     }
-}
-
-// function to spawn the reward item
-fn spawn_reward_item(
-    commands: &mut Commands,
-    position: Vec3,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
-) {
-    // Spawn a Bridge Piece
-    let reward_mesh = meshes.add(Rectangle::new(40.0, 15.0)); // Bridge-like shape
-    let reward_material = materials.add(ColorMaterial::from(Color::srgb(0.55, 0.27, 0.07))); // Brown/wood color
-    
-    commands.spawn((
-        Name::new("Bridge Piece"),
-        ObjectPickable::new(ItemKind::Object1),
-        Transform::from_translation(position),
-        GlobalTransform::default(),
-        Mesh2d(reward_mesh),
-        MeshMaterial2d(reward_material),
-        DespawnOnExit(Screen::Gameplay), // Add if needed
-    ));
-    
-    info!("Spawned Bridge Piece at position: {:?}", position);
 }
 
 // Component to track if player is touching broken bridge

@@ -34,7 +34,7 @@ pub fn drop_item(
             item_to_drop,
             player_pos + Vec3::new(0., 0., 1.), // Drop slightly above the player
             meshes.add(Rectangle::new(30., 20.)),
-            materials.add(ColorMaterial::from(Color::BLACK)),
+            materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.))),
         );
         // Debug for location of where the item is dropped
         println!("Dropped item at position: {:?}", player_pos + Vec3::new(0., 0., 1.));
