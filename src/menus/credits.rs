@@ -34,6 +34,7 @@ fn created_by() -> impl Bundle {
     grid(vec![
         ["Kain Dean (Kainosaur)", "Programmer"],
         ["Nichele Phillips (SciencesPatchwork)", "Art"],
+        ["sonic8815", "Programmerr"]
     ])
 }
 
