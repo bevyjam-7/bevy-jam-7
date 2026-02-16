@@ -143,3 +143,4 @@ fn update_inventory_ui(
 
     **text = format!("Items Collected: {}", items_text);
 }
+

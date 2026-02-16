@@ -8,6 +8,7 @@ pub mod animation;
 pub mod physics;
 pub mod borders;
 pub mod npc;
+pub mod old_bookshelf;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -16,5 +17,6 @@ pub(super) fn plugin(app: &mut App) {
         animation::plugin,
         events::plugin,
         npc::plugin,
+        old_bookshelf::plugin,
     ));
 }

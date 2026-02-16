@@ -3,7 +3,7 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, PLAYER_SPEED, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, Y_BRIDGE_SECTION_BORDER_OFFSETS}, map::{animation::HouseAnimation, borders::{spawn_box_borders, spawn_broken_bridge_collision}, events::{GameProgressTracker, MapSection, TranstionBetweenSections}, npc::{NpcAssets, interaction_box_bundle, spawn_npc}, object::spawn_object, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
+    asset_tracking::LoadResource, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, PLAYER_SPEED, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, Y_BRIDGE_SECTION_BORDER_OFFSETS}, map::{animation::HouseAnimation, borders::{spawn_box_borders, spawn_broken_bridge_collision}, events::{GameProgressTracker, MapSection, TranstionBetweenSections}, npc::{NpcAssets, interaction_box_bundle, spawn_npc}, object::spawn_object, old_bookshelf, teleporter::{create_teleporter_pair, link_teleporters}}, player::{animation::FacingDirection, player::{PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -97,7 +97,7 @@ pub fn spawn_level(
         }
 
         // Bridge map section
-        children.spawn(bridge_section_map(&mut meshes, &mut materials));
+        children.spawn(bridge_section_map(&map_assets));
         children.spawn(teleportation_tripwire_entity(
             TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION,
             MapSection::WitchHouse,
@@ -129,6 +129,8 @@ pub fn spawn_level(
         children.spawn(spawn_npc(&npc_assets, &mut texture_atlas_layouts)).with_children(|children| {
             children.spawn(interaction_box_bundle());
         });
+        children.spawn(old_bookshelf::spawn_old_bookshelf());
+        children.spawn(old_bookshelf::spawn_bookshelf_collision());
         children.spawn(teleportation_tripwire_entity(
             TRIPWIRE_OLD_TO_BRIDGE_POSITION + OLD_HOUSE_LOCATION,
             MapSection::BridgeRight,
@@ -186,15 +188,19 @@ pub fn witch_house_map(
 }
 
 pub fn bridge_section_map(
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
+    map_assets: &MapAssets,
 ) -> impl Bundle {
-    let bridge_mesh = meshes.add(Rectangle::new(SCENE_TILE_SIZES.x as f32, SCENE_TILE_SIZES.y as f32));
-    let bridge_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.)));
+    // let bridge_mesh = meshes.add(Rectangle::new(SCENE_TILE_SIZES.x as f32, SCENE_TILE_SIZES.y as f32));
+    // let bridge_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.)));
     (
         Name::new("Bridge Section"),
-        Mesh2d(bridge_mesh),
-        MeshMaterial2d(bridge_material),
+        BridgeSection,
+        // Mesh2d(bridge_mesh),
+        // MeshMaterial2d(bridge_material),
+        Sprite::from_image(
+            map_assets.broken_bridge.clone()
+
+        ),
         Transform {
             // make map twice the normal size
             scale: Vec2::splat(2.0).extend(0.0),
@@ -249,11 +255,19 @@ pub fn teleportation_tripwire_entity(
 #[reflect(Component)]
 struct WitchHouse;
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component)]
+pub struct BridgeSection;
+
 #[derive(Resource, Asset, Clone, Reflect)]
 #[reflect(Resource)]
 pub struct MapAssets {
     #[dependency]
-    witch_house: Handle<Image>,
+    pub witch_house: Handle<Image>,
+    #[dependency]
+    pub broken_bridge: Handle<Image>,
+    #[dependency]
+    pub fixed_bridge: Handle<Image>,
 }
 
 impl FromWorld for MapAssets {
@@ -262,6 +276,18 @@ impl FromWorld for MapAssets {
         MapAssets {
             witch_house: assets.load_with_settings(
                 "images/witch_house.png",
+                |settings: &mut ImageLoaderSettings| {
+                    settings.sampler = ImageSampler::nearest();
+                }
+            ),
+            broken_bridge: assets.load_with_settings(
+                "images/broken_bridge.png",
+                |settings: &mut ImageLoaderSettings| {
+                    settings.sampler = ImageSampler::nearest();
+                }
+            ),
+            fixed_bridge: assets.load_with_settings(
+                "images/fixed_bridge.png",
                 |settings: &mut ImageLoaderSettings| {
                     settings.sampler = ImageSampler::nearest();
                 }

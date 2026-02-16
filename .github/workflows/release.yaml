@@ -253,7 +253,7 @@ jobs:
       - name: Build and add web bundle to app (Web)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'web' }}
         run: |
-          cargo binstall --locked --no-confirm --force wasm-bindgen-cli
+          cargo binstall --locked --no-confirm --force --version 0.2.108 wasm-bindgen-cli
           cargo binstall --locked --no-confirm --force wasm-opt
           bevy build --locked --release --features='${{ matrix.features }}' --yes web --bundle
           mv 'target/bevy_web/web-release/${{ env.cargo_build_binary_name }}' '${{ env.app }}'

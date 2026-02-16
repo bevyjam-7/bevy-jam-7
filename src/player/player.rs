@@ -55,6 +55,7 @@ pub fn player(
                 GameLayer::Default,
                 GameLayer::Border,
                 GameLayer::BrokenBridge,
+                GameLayer::OldBookshelf,
             ],
         ),
         LinearVelocity::default(),

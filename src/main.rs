@@ -50,14 +50,14 @@ impl Plugin for AppPlugin {
                     ..default()
                 }),
         );
-
+        
         app.add_plugins((
             YarnSpinnerPlugin::with_yarn_source(YarnFileSource::file("dialogue/introduction.yarn")),
         ));
 
         app.add_plugins(dialogue::plugin);
 
-        
+
         // Add physics
         app.add_plugins(PhysicsPlugins::default().with_length_unit(64.)).insert_resource(Gravity(Vec2::ZERO));
 
