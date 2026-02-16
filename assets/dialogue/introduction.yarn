@@ -27,7 +27,7 @@ title: OldHouse
 position: 334,497
 ---
 <<if get_progress_bool(2) == false>>
-    Entering the very finished old house, you encounter a weird looking fellow in the corner of the room.
+    Entering the old house, you encounter a weird looking fellow in the corner of the room.
     ???: Hey kid, come over here and press "Q" to interact with me!
 <<endif>>
 ===

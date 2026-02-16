@@ -204,16 +204,16 @@ pub fn player_transition_between_sections(
                     
                 },
                 MapSection::BridgeLeft => {
-                    player_transform.translation = TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION + Vec3::new(50., 0., 0.);
+                    player_transform.translation = TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION + Vec3::new(50., 0., 5.);
                     camera_transform.translation = BRIDGE_SECTION_LOCATION;
                     commands.trigger(DialogueSelected { s: "BridgeLeft".to_string() });
                 },
                 MapSection::BridgeRight => {
-                    player_transform.translation = TRIPWIRE_BRIDGE_TO_OLD_POSITION + BRIDGE_SECTION_LOCATION + Vec3::new(-50., 0., 0.);
+                    player_transform.translation = TRIPWIRE_BRIDGE_TO_OLD_POSITION + BRIDGE_SECTION_LOCATION + Vec3::new(-50., 0., 5.);
                     camera_transform.translation = BRIDGE_SECTION_LOCATION;
                 }
                 MapSection::OldHouse => {
-                    player_transform.translation = TRIPWIRE_OLD_TO_BRIDGE_POSITION + OLD_HOUSE_LOCATION + Vec3::new(50., 0., 0.);
+                    player_transform.translation = TRIPWIRE_OLD_TO_BRIDGE_POSITION + OLD_HOUSE_LOCATION + Vec3::new(50., 0., 5.);
                     camera_transform.translation = OLD_HOUSE_LOCATION;
                     commands.trigger(DialogueSelected { s: "OldHouse".to_string() });
                 }

@@ -1,7 +1,7 @@
 use bevy::{ecs::event::Trigger, prelude::*};
 use avian2d::prelude::*;
 
-use crate::{game_consts::{BORDER_THICKNESS, SCENE_TILE_SIZES}, map::{self, physics::GameLayer}};
+use crate::{game_consts::{BORDER_THICKNESS, BROKEN_BRIDGE_COLLISION_LOCATION, SCENE_TILE_SIZES}, map::{self, physics::GameLayer}};
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
@@ -74,6 +74,6 @@ pub fn spawn_broken_bridge_collision(
         CollisionLayers::new(GameLayer::BrokenBridge, [
             GameLayer::Player,
         ]),
-        Transform::from_translation(map_location),
+        Transform::from_translation(map_location + BROKEN_BRIDGE_COLLISION_LOCATION),
     )
 }

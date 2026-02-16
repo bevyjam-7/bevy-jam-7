@@ -97,7 +97,7 @@ pub fn spawn_level(
         }
 
         // Bridge map section
-        children.spawn(bridge_section_map(&mut meshes, &mut materials));
+        children.spawn(bridge_section_map(&map_assets));
         children.spawn(teleportation_tripwire_entity(
             TRIPWIRE_BRIDGE_TO_HOUSE_POSITION + BRIDGE_SECTION_LOCATION,
             MapSection::WitchHouse,
@@ -188,15 +188,18 @@ pub fn witch_house_map(
 }
 
 pub fn bridge_section_map(
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
+    map_assets: &MapAssets,
 ) -> impl Bundle {
-    let bridge_mesh = meshes.add(Rectangle::new(SCENE_TILE_SIZES.x as f32, SCENE_TILE_SIZES.y as f32));
-    let bridge_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.)));
+    // let bridge_mesh = meshes.add(Rectangle::new(SCENE_TILE_SIZES.x as f32, SCENE_TILE_SIZES.y as f32));
+    // let bridge_material = materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.)));
     (
         Name::new("Bridge Section"),
-        Mesh2d(bridge_mesh),
-        MeshMaterial2d(bridge_material),
+        // Mesh2d(bridge_mesh),
+        // MeshMaterial2d(bridge_material),
+        Sprite::from_image(
+            map_assets.broken_bridge.clone()
+
+        ),
         Transform {
             // make map twice the normal size
             scale: Vec2::splat(2.0).extend(0.0),
@@ -256,6 +259,10 @@ struct WitchHouse;
 pub struct MapAssets {
     #[dependency]
     witch_house: Handle<Image>,
+    #[dependency]
+    broken_bridge: Handle<Image>,
+    #[dependency]
+    fixed_bridge: Handle<Image>,
 }
 
 impl FromWorld for MapAssets {
@@ -264,6 +271,18 @@ impl FromWorld for MapAssets {
         MapAssets {
             witch_house: assets.load_with_settings(
                 "images/witch_house.png",
+                |settings: &mut ImageLoaderSettings| {
+                    settings.sampler = ImageSampler::nearest();
+                }
+            ),
+            broken_bridge: assets.load_with_settings(
+                "images/broken_bridge.png",
+                |settings: &mut ImageLoaderSettings| {
+                    settings.sampler = ImageSampler::nearest();
+                }
+            ),
+            fixed_bridge: assets.load_with_settings(
+                "images/fixed_bridge.png",
                 |settings: &mut ImageLoaderSettings| {
                     settings.sampler = ImageSampler::nearest();
                 }
