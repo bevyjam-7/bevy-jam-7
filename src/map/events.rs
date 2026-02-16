@@ -76,6 +76,8 @@ pub struct GameProgressTracker {
     pub first_talk_npc: bool,
     pub returned_home_after_talk_npc: bool,
     pub bread_in_old_house: bool,
+    pub item_been_acquired: bool,
+    pub teleporter_guide: bool,
 }
 
 impl Default for GameProgressTracker {
@@ -87,6 +89,8 @@ impl Default for GameProgressTracker {
             first_talk_npc: false, 
             returned_home_after_talk_npc: false, 
             bread_in_old_house: false, 
+            item_been_acquired: false,
+            teleporter_guide: false,
         }
     }
 }
@@ -109,6 +113,8 @@ pub fn get_progress_bool (
         3 => progress.first_talk_npc,
         4 => progress.returned_home_after_talk_npc,
         5 => progress.bread_in_old_house,
+        6 => progress.item_been_acquired,
+        7 => progress.teleporter_guide,
         _ => false,
     }
 }
@@ -128,6 +134,8 @@ pub fn set_progress_bool (
         3 => progress.first_talk_npc = true,
         4 => progress.returned_home_after_talk_npc = true,
         5 => progress.bread_in_old_house = true,
+        6 => progress.item_been_acquired = true,
+        7 => progress.teleporter_guide = true,
         _ => return false,
     }
     true

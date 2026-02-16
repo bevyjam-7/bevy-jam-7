@@ -43,9 +43,22 @@ position: 330,834
 
 title: AcquireFirstItem
 ---
-With the item in your hands, you think about how there is a teleporter in both your room, and in the old house.
-Maybe I can place the item on the teleporter in my room?
-(Press "R" to drop your item!)
+<<if get_progress_bool(6) == false>>
+    With the item in your hands, you think about how there is a teleporter in both your room, and in the old house.
+    Maybe I can place the item on the teleporter in my room?
+    (Press "R" to drop your item!)
+    <<set_progress_bool 3>>
+    <<set_progress_bool 6>>
+<<endif>>
+===
+
+title: ItemOnTeleporterGuide
+---
+<<if get_progress_bool(7) == false>>
+    Maybe I can active the teleporter when I'm a ghost...
+    (Become a ghost and interact with the teleporter!)
+    <<set_progress_bool 7>>
+<<endif>>
 ===
 
 title: TalkNpc

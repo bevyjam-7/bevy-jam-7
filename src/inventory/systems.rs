@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{inventory::inventory::{Inventory, ItemKind, ObjectPickable}, map::object::spawn_object, player::player::Player};
+use crate::{inventory::inventory::{Inventory, ItemKind, ObjectPickable}, map::{events::DialogueSelected, object::spawn_object}, player::player::Player};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_inventory_ui)
@@ -97,6 +97,7 @@ pub fn handle_pickups(
     for (entity, kind) in collected {
         commands.entity(entity).despawn();
         let count = inventory.add(kind);
+        commands.trigger(DialogueSelected { s: "AcquireFirstItem".to_string() });
         info!(
             " Picked up {} (total: {}) — inventory: {}",
             kind, count, inventory.summary()
