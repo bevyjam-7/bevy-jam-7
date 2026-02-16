@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{inventory::inventory::{Inventory, ItemKind, ObjectPickable}, map::object::spawn_object, player::player::Player};
+use crate::{inventory::inventory::{Inventory, ItemKind, ObjectPickable}, map::{events::DialogueSelected, object::spawn_object}, player::player::Player};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_inventory_ui)
@@ -34,7 +34,7 @@ pub fn drop_item(
             item_to_drop,
             player_pos + Vec3::new(0., 0., 1.), // Drop slightly above the player
             meshes.add(Rectangle::new(30., 20.)),
-            materials.add(ColorMaterial::from(Color::BLACK)),
+            materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.))),
         );
         // Debug for location of where the item is dropped
         println!("Dropped item at position: {:?}", player_pos + Vec3::new(0., 0., 1.));
@@ -97,6 +97,7 @@ pub fn handle_pickups(
     for (entity, kind) in collected {
         commands.entity(entity).despawn();
         let count = inventory.add(kind);
+        commands.trigger(DialogueSelected { s: "AcquireFirstItem".to_string() });
         info!(
             " Picked up {} (total: {}) — inventory: {}",
             kind, count, inventory.summary()

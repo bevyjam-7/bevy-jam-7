@@ -28,13 +28,14 @@ pub const NPC_LOCATION: Vec3 = Vec3::new(137., -100., 0.0);
 // Teleporter related constants
 pub const TELEPORTER_A_LOCATION: Vec3 = Vec3::new(-70., -70., 1.);
 pub const TELEPORTER_B_LOCATION: Vec3 = Vec3::new(0., 0., 1.);
-pub const TELEPORTER_PROXIMITY_RADIUS: f32 = 30.0;
+pub const TELEPORTER_PROXIMITY_RADIUS: f32 = 100.0;
 
 pub const TRIPWIRE_HOUSE_TO_BRIDGE_POSITION: Vec3 = Vec3::new(235., 78., 0.);
 // The position is relative to the center of the bridge section
 pub const TRIPWIRE_BRIDGE_TO_HOUSE_POSITION: Vec3 = Vec3::new(-225., 0., 0.);
 pub const TRIPWIRE_BRIDGE_TO_OLD_POSITION: Vec3 = Vec3::new(225., 0., 0.);
 pub const TRIPWIRE_OLD_TO_BRIDGE_POSITION: Vec3 = Vec3::new(-225., 0., 0.,);
+pub const TRIPWIRE_PROXIMITY_RADIUS: f32 = 30.0;
 
 
 pub mod pickup {

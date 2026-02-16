@@ -4,7 +4,9 @@ use bevy::{ecs::system::command, math::ops::sqrt, prelude::*};
 use bevy_yarnspinner::prelude::*;
 use bevy_yarnspinner_example_dialogue_view::prelude::*;
 
-use crate::{AppSystems, PausableSystems, Pause, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_PROXIMITY_RADIUS, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_LOCATION}, inventory::inventory::{ItemKind, ObjectPickable}, map::{level::Level, npc::{NpcInteractionBox, PlayerOnInteractionBox}, teleporter::{Teleportable, Teleporter}}, player::{action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer}};
+use crate::{PausableSystems, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_B_LOCATION, TELEPORTER_PROXIMITY_RADIUS, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, TRIPWIRE_PROXIMITY_RADIUS, WITCH_HOUSE_LOCATION}, inventory::inventory::{ItemKind, ObjectPickable}, map::{npc::NpcInteractionBox, teleporter::Teleportable}, player::{action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer}, screens::Screen};
+
+
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<BreadOnTeleporterB>()
         .add_systems(
@@ -16,7 +18,7 @@ pub(super) fn plugin(app: &mut App) {
             ) 
             .chain()
             .in_set(PausableSystems),
-        ).add_observer(run_dialogue);
+        ).add_observer(run_dialogue).add_observer(spawn_reward_item);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -25,11 +27,6 @@ pub enum MapSection {
     BridgeLeft,
     BridgeRight,
     OldHouse,
-}
-
-
-pub struct EventProgress {
-    has_gone_bridge_section: bool,
 }
 
 #[derive(Component, Debug)]
@@ -43,7 +40,7 @@ impl TranstionBetweenSections {
     pub fn new(next_section: MapSection) -> Self {
         Self {
             next_section,
-            transition_radius: TELEPORTER_PROXIMITY_RADIUS,
+            transition_radius: TRIPWIRE_PROXIMITY_RADIUS,
             can_transition: false,
         }
     }
@@ -79,6 +76,8 @@ pub struct GameProgressTracker {
     pub first_talk_npc: bool,
     pub returned_home_after_talk_npc: bool,
     pub bread_in_old_house: bool,
+    pub item_been_acquired: bool,
+    pub teleporter_guide: bool,
 }
 
 impl Default for GameProgressTracker {
@@ -90,6 +89,8 @@ impl Default for GameProgressTracker {
             first_talk_npc: false, 
             returned_home_after_talk_npc: false, 
             bread_in_old_house: false, 
+            item_been_acquired: false,
+            teleporter_guide: false,
         }
     }
 }
@@ -112,6 +113,8 @@ pub fn get_progress_bool (
         3 => progress.first_talk_npc,
         4 => progress.returned_home_after_talk_npc,
         5 => progress.bread_in_old_house,
+        6 => progress.item_been_acquired,
+        7 => progress.teleporter_guide,
         _ => false,
     }
 }
@@ -131,12 +134,42 @@ pub fn set_progress_bool (
         3 => progress.first_talk_npc = true,
         4 => progress.returned_home_after_talk_npc = true,
         5 => progress.bread_in_old_house = true,
+        6 => progress.item_been_acquired = true,
+        7 => progress.teleporter_guide = true,
         _ => return false,
     }
     true
 }
 
-// Dialogue when the game first starts. The game is in pause state when dialogue is in action
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Event)]
+pub struct SpawnRewardEvent;
+
+// function to spawn the reward item
+pub fn spawn_reward_item(
+    _: On<SpawnRewardEvent>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    // Spawn a Bridge Piece
+    let reward_mesh = meshes.add(Rectangle::new(40.0, 15.0)); // Bridge-like shape
+    let reward_material = materials.add(ColorMaterial::from(Color::srgb(0.55, 0.27, 0.07))); // Brown/wood color
+    
+    commands.spawn((
+        Name::new("Bridge Piece"),
+        ObjectPickable::new(ItemKind::Object1),
+        Transform::from_translation(TELEPORTER_B_LOCATION + OLD_HOUSE_LOCATION),
+        GlobalTransform::default(),
+        Mesh2d(reward_mesh),
+        MeshMaterial2d(reward_material),
+        DespawnOnExit(Screen::Gameplay), // Add if needed
+    ));
+    
+    info!("Spawned Bridge Piece at position: {:?}", TELEPORTER_B_LOCATION + OLD_HOUSE_LOCATION);
+
+}
+
+// Dialogue when the game first starts.
 pub fn start_dialogue(mut commands: Commands) { 
     commands.trigger(DialogueSelected { s: "WakeUp".to_string() });   
 }
@@ -235,14 +268,18 @@ fn check_bread_on_teleporter_b(
     mut bread_state: ResMut<BreadOnTeleporterB>,
     item_query: Query<(&ObjectPickable, Option<&Teleportable>)>,
     teleporter_query: Query<(&Name, Entity)>,
+    mut game_progress: Query<&mut GameProgressTracker>,
 ) {
+    let Ok(mut progress) = game_progress.single_mut() else {
+        return;
+    };
     let teleporter_b_id = teleporter_query
         .iter()
         .find(|(name, _)| name.as_str() == "Teleporter B")
         .map(|(_, entity)| entity);
     
     let Some(tp_b_entity) = teleporter_b_id else {
-        bread_state.is_present = false;
+        progress.bread_in_old_house = false;
         return;
     };
     
@@ -263,5 +300,5 @@ fn check_bread_on_teleporter_b(
         }
     }
     
-    bread_state.is_present = bread_on_teleporter;
+    progress.bread_in_old_house = bread_on_teleporter;
 }

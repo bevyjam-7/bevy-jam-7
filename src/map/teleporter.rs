@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{AppSystems, PausableSystems, game_consts::TELEPORTER_PROXIMITY_RADIUS, player::{PlayerState, player::Player}, screens::Screen};
+use crate::{AppSystems, PausableSystems, game_consts::TELEPORTER_PROXIMITY_RADIUS, map::events::{DialogueSelected, GameProgressTracker}, player::{PlayerState, player::Player}, screens::Screen};
 use crate::player::player_ghost::player_ghost::GhostPlayer;
 use crate::inventory::inventory::ObjectPickable;
 
@@ -83,6 +83,7 @@ fn detect_items_on_teleporters(
     item_query: Query<(Entity, &Transform), With<ObjectPickable>>,
     teleportable_query: Query<&Teleportable>,
     mut teleporter_query: Query<(Entity, &Transform, &mut Teleporter)>,
+    mut game_progress: Query<&mut GameProgressTracker>
 ) {
     for (item_entity, item_transform) in &item_query {
         let mut is_near_teleporter = false;
@@ -91,11 +92,18 @@ fn detect_items_on_teleporters(
         // Check if item is near any teleporter
         for (tp_entity, tp_transform, _) in &teleporter_query {
             let distance = item_transform.translation.distance(tp_transform.translation);
-            
+
             if distance < TELEPORTER_PROXIMITY_RADIUS {
                 is_near_teleporter = true;
                 nearest_tp_entity = Some(tp_entity);
+                let Ok(progress) = game_progress.single_mut() else {
+                    return;
+                };
+                if progress.teleporter_guide == false {
+                    commands.trigger(DialogueSelected { s: "ItemOnTeleporterGuide".to_string() });
+                }
                 break;
+                
             }
         }
         
