@@ -23,7 +23,7 @@ unicode-normalization = { version = "0.1", default-features = false }
 unicode-segmentation = "1.12.0"
 
 [target.wasm32-unknown-unknown.dependencies]
-getrandom = { version = "0.3", features = ["wasm_js"] }
+getrandom = { version = "0.4.1", features = ["wasm_js"] }
 
 [features]
 # Default to a native dev build.
