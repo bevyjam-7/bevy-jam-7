@@ -49,7 +49,7 @@ fn spawn_ghost_player(
                         &player_state,
                         &player_assets,
                         &mut texture_atlas_layouts,
-                        FacingDirection::Down,
+                        FacingDirection::Side,
                     )
                 ).insert(Transform {
                     translation: player_transform.translation.with_z(1.0), // Player position with custom z

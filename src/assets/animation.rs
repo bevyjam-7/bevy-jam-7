@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::prelude::*;
 use std::time::Duration;
 
-use crate::{AppSystems, PausableSystems, audio::sound_effect, player::{action::MovementController, player::PlayerAssets}};
+use crate::{AppSystems, PausableSystems, audio::sound_effect, player::{PlayerState, action::MovementController, player::PlayerAssets}};
 
 pub(super) fn plugin(app: &mut App) {
     // Animate and play sound effects based on controls.
@@ -61,7 +61,10 @@ fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation
 }
 
 /// Update the sprite direction and animation state (idling/walking).
+/// Player has 4 directions of movement, but Ghost only has 2
+/// So we take in the player's state to figure out how we should be moving.
 fn update_animation_movement(
+    player_state: Res<State<PlayerState>>,
     mut player_query: Query<(&MovementController, &mut Sprite, &mut PlayerAnimation)>,
 ) {
     for (controller, mut sprite, mut animation) in &mut player_query {
@@ -75,11 +78,26 @@ fn update_animation_movement(
         } else {
             // If the player is moving in both x and y direction, prioritize vertical animation. 
             if controller.intent.y > 0.0 {
-                animation.facing = FacingDirection::Up;
-                PlayerAnimationState::WalkingUp
+                
+                match player_state.get() {
+                    PlayerState::Awake => {
+                        animation.facing = FacingDirection::Up;
+                        PlayerAnimationState::WalkingUp
+                    },
+                    PlayerState::Asleep => {
+                        PlayerAnimationState::WalkingSide
+                    },
+                }
             } else if controller.intent.y < 0.0 {
-                animation.facing = FacingDirection::Down;
-                PlayerAnimationState::WalkingDown
+                match player_state.get() {
+                    PlayerState::Awake => {
+                        animation.facing = FacingDirection::Down;
+                        PlayerAnimationState::WalkingDown
+                    },
+                    PlayerState::Asleep => {
+                        PlayerAnimationState::WalkingSide
+                    },
+                }
             } else {
                 animation.facing = FacingDirection::Side;
                 PlayerAnimationState::WalkingSide
