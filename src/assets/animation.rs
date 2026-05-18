@@ -1,18 +1,8 @@
-//! Player sprite animation.
-//! This is based on multiple examples and may be very different for your game.
-//! - [Sprite flipping](https://github.com/bevyengine/bevy/blob/latest/examples/2d/sprite_flipping.rs)
-//! - [Sprite animation](https://github.com/bevyengine/bevy/blob/latest/examples/2d/sprite_animation.rs)
-//! - [Timers](https://github.com/bevyengine/bevy/blob/latest/examples/time/timers.rs)
-
 use bevy::prelude::*;
 use rand::prelude::*;
 use std::time::Duration;
 
-use crate::{
-    AppSystems, PausableSystems,
-    audio::sound_effect,
-    player::{action::MovementController, player::PlayerAssets},
-};
+use crate::{AppSystems, PausableSystems, audio::sound_effect, player::{action::MovementController, player::PlayerAssets}};
 
 pub(super) fn plugin(app: &mut App) {
     // Animate and play sound effects based on controls.
@@ -31,6 +21,9 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(PausableSystems),
     );
 }
+
+
+// Player and Ghost animations are very similar, with them sharing basically everything.
 
 /// Component that tracks player's animation state.
 /// It is tightly bound to the texture atlas we use.
@@ -233,5 +226,3 @@ impl PlayerAnimation {
         }
     }
 }
-
-

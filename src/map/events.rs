@@ -4,7 +4,7 @@ use bevy::{ecs::system::command, math::ops::sqrt, prelude::*};
 use bevy_yarnspinner::prelude::*;
 use bevy_yarnspinner_example_dialogue_view::prelude::*;
 
-use crate::{PausableSystems, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_B_LOCATION, TELEPORTER_PROXIMITY_RADIUS, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, TRIPWIRE_PROXIMITY_RADIUS, WITCH_HOUSE_LOCATION}, inventory::inventory::{ItemKind, ObjectPickable}, map::{npc::NpcInteractionBox, teleporter::Teleportable}, player::{action::MovementController, player::Player, player_ghost::player_ghost::GhostPlayer}, screens::Screen};
+use crate::{PausableSystems, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_B_LOCATION, TELEPORTER_PROXIMITY_RADIUS, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, TRIPWIRE_PROXIMITY_RADIUS, WITCH_HOUSE_LOCATION}, inventory::inventory::{ItemKind, ObjectPickable}, map::{npc::NpcInteractionBox, teleporter::Teleportable}, player::{action::MovementController, player::{AwakePlayer, GhostPlayer}}, screens::Screen};
 
 
 pub(super) fn plugin(app: &mut App) {
@@ -231,7 +231,7 @@ pub fn player_transition_between_sections(
 
 // checks if player is in range to interact with the npc
 fn interaction_box_detect_player(
-    player_query: Query<(Entity, &Transform), Or<(With<Player>, With<GhostPlayer>)>>,
+    player_query: Query<(Entity, &Transform), Or<(With<AwakePlayer>, With<GhostPlayer>)>>,
     mut interaction_box_query: Query<(Entity, &GlobalTransform, &mut NpcInteractionBox)>,
 ) {
     for (_box_entity, box_transform, mut interaction_box) in interaction_box_query.iter_mut() {

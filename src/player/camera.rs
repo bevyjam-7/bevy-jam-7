@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{PausableSystems, PlayerCamera, player::player::Player};
+use crate::{PausableSystems, PlayerCamera, player::player::AwakePlayer};
 
 pub(super) fn plugin(app: &mut App) {
     // app.add_systems(Update, 

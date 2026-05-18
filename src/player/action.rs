@@ -23,8 +23,9 @@ use crate::map::borders::BrokenBridgeCollider;
 use crate::map::events::{BreadOnTeleporterB, DialogueSelected, GameProgressTracker, SpawnRewardEvent};
 use crate::map::level::{BridgeSection, MapAssets};
 use crate::map::npc::NpcInteractionBox;
+use crate::player::player::{AwakePlayer, GhostPlayer};
 use crate::screens::Screen::{self, Gameplay};
-use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::{ActionTimer, Player}, player_ghost::player_ghost::{GhostPlayer}}};
+use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::ActionTimer}};
 use crate::map::teleporter::Teleportable;
 
 pub(super) fn plugin(app: &mut App) {
@@ -94,8 +95,8 @@ impl PlayerAction {
 fn drop_item_action(
     commands: Commands,
     inventory: ResMut<Inventory>,
-    player_query: Query<&Transform, With<Player>>,
-    action_query: Query<&ActionState<PlayerAction>, With<Player>>,
+    player_query: Query<&Transform, With<AwakePlayer>>,
+    action_query: Query<&ActionState<PlayerAction>, With<AwakePlayer>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
@@ -175,9 +176,9 @@ fn teleport_entity(
 fn pick_up_item_action(
     mut commands: Commands,
     inventory: ResMut<Inventory>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<&Transform, With<AwakePlayer>>,
     pickables: Query<(Entity, &GlobalTransform, &ObjectPickable)>,
-    action_query: Query<&ActionState<PlayerAction>, With<Player>>,
+    action_query: Query<&ActionState<PlayerAction>, With<AwakePlayer>>,
     teleportable_query: Query<&Teleportable>,
     mut teleporter_query: Query<&mut Teleporter>,
 ) {
@@ -204,9 +205,9 @@ fn pick_up_item_action(
 fn apply_state_switch(
     player_state: ResMut<State<PlayerState>>,
     mut next_player_state: ResMut<NextState<PlayerState>>,
-    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController, &mut ActionTimer), Or<(With<Player>, With<GhostPlayer>)>>,
-    player_query: Query<&GlobalTransform, (With<Player>, Without<GhostPlayer>)>,
-    ghost_query: Query<&GlobalTransform, (With<GhostPlayer>, Without<Player>)>,
+    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController, &mut ActionTimer), Or<(With<AwakePlayer>, With<GhostPlayer>)>>,
+    player_query: Query<&GlobalTransform, (With<AwakePlayer>, Without<GhostPlayer>)>,
+    ghost_query: Query<&GlobalTransform, (With<GhostPlayer>, Without<AwakePlayer>)>,
     time: Res<Time>,
 ) {
     const WAKE_UP_DISTANCE: f32 = 50.0;
@@ -268,7 +269,7 @@ fn force_awake_state(
 
 // resets action timer when exiting gameplay
 fn reset_action_timer(
-    mut timer_query: Query<&mut ActionTimer, With<Player>>,
+    mut timer_query: Query<&mut ActionTimer, With<AwakePlayer>>,
 ) {
     for mut action_timer in &mut timer_query {
         // Set the timer as finished by setting elapsed time to duration
@@ -303,7 +304,7 @@ impl Default for MovementController {
 // NPC related actions
 fn talk_to_npc(
     mut commands: Commands,
-    action_state: Query<&ActionState<PlayerAction>, Or<(With<Player>, With<GhostPlayer>)>>,
+    action_state: Query<&ActionState<PlayerAction>, Or<(With<AwakePlayer>, With<GhostPlayer>)>>,
     interaction_boxes: Query<&NpcInteractionBox>,
     mut game_progress: Query<&mut GameProgressTracker>,
     bread_query: Query<(Entity, &Teleportable), With<ObjectPickable>>,
@@ -345,8 +346,8 @@ pub struct TouchingBrokenBridge {
 // System to detect collision with broken bridge using spatial queries
 fn detect_broken_bridge_collision(
     spatial_query: SpatialQuery,
-    player_query: Query<(Entity, &Transform, &Collider), With<Player>>,
-    mut touching_query: Query<&mut TouchingBrokenBridge, With<Player>>,
+    player_query: Query<(Entity, &Transform, &Collider), With<AwakePlayer>>,
+    mut touching_query: Query<&mut TouchingBrokenBridge, With<AwakePlayer>>,
     broken_bridge_query: Query<Entity, With<BrokenBridgeCollider>>,
 ) {
     let Ok((player_entity, player_transform, player_collider)) = player_query.single() else {
@@ -379,9 +380,9 @@ fn detect_broken_bridge_collision(
 // Function to fix bridge using bridge piece
 fn fix_bridge(
     mut commands: Commands,
-    action_state: Query<&ActionState<PlayerAction>, With<Player>>,
+    action_state: Query<&ActionState<PlayerAction>, With<AwakePlayer>>,
     mut inventory: ResMut<Inventory>,
-    touching_query: Query<&TouchingBrokenBridge, With<Player>>,
+    touching_query: Query<&TouchingBrokenBridge, With<AwakePlayer>>,
     broken_bridge_query: Query<Entity, With<BrokenBridgeCollider>>,
     mut bridge_sprite_query: Query<&mut Sprite, With<BridgeSection>>,
     map_assets: Option<Res<MapAssets>>,

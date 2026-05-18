@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{AppSystems, PausableSystems, game_consts::TELEPORTER_PROXIMITY_RADIUS, map::events::{DialogueSelected, GameProgressTracker}, player::{PlayerState, player::Player}, screens::Screen};
-use crate::player::player_ghost::player_ghost::GhostPlayer;
+use crate::{AppSystems, PausableSystems, game_consts::TELEPORTER_PROXIMITY_RADIUS, map::events::{DialogueSelected, GameProgressTracker}, player::{PlayerState, player::{AwakePlayer, GhostPlayer}}, screens::Screen};
 use crate::inventory::inventory::ObjectPickable;
 
 pub(super) fn plugin(app: &mut App) {

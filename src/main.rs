@@ -3,7 +3,6 @@
 // Disable console on Windows for non-dev builds.
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
-mod asset_tracking;
 mod audio;
 mod player;
 #[cfg(feature = "dev")]
@@ -15,6 +14,7 @@ mod map;
 pub mod game_consts;
 mod inventory;
 mod dialogue;
+mod assets;
 
 use avian2d::{PhysicsPlugins, prelude::Gravity};
 
@@ -63,7 +63,7 @@ impl Plugin for AppPlugin {
 
         // Add other plugins.
         app.add_plugins((
-            asset_tracking::plugin,
+            assets::plugin,
             audio::plugin,
             player::plugin,
             #[cfg(feature = "dev")]

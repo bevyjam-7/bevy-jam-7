@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{inventory::inventory::{Inventory, ItemKind, ObjectPickable}, map::{events::DialogueSelected, object::spawn_object}, player::player::Player};
+use crate::{inventory::inventory::{Inventory, ItemKind, ObjectPickable}, map::{events::DialogueSelected, object::spawn_object}, player::player::AwakePlayer};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_inventory_ui)
@@ -13,7 +13,7 @@ struct PickupEvent(Entity);
 pub fn drop_item(
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<&Transform, With<AwakePlayer>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
@@ -67,7 +67,7 @@ pub fn drop_item(
 pub fn handle_pickups(
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<&Transform, With<AwakePlayer>>,
     pickables: Query<(Entity, &GlobalTransform, &ObjectPickable)>,
 ) {
     println!("Checking for pickups...");

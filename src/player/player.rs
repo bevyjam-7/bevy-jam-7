@@ -8,9 +8,7 @@ use bevy::{
 use leafwing_input_manager::prelude::*;
 
 use crate::{
-    AppSystems, PausableSystems, asset_tracking::LoadResource, game_consts::PLAYER_SPEED, map::physics::GameLayer, player::{
-        action::{MovementController, PlayerAction, TouchingBrokenBridge}, animation::{FacingDirection, PlayerAnimation}
-    }
+    assets::{animation::{FacingDirection, PlayerAnimation}, asset_tracking::LoadResource}, game_consts::PLAYER_SPEED, map::physics::GameLayer, player::{PlayerState, action::{MovementController, PlayerAction, TouchingBrokenBridge}}
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -20,25 +18,33 @@ pub(super) fn plugin(app: &mut App) {
 
 use avian2d::prelude::*;
 
-/// The player character.
+/// The player character. Be sure to change state to asleep before spawning new player, or else will error
 pub fn player(
-    max_speed: f32,
-    player_assets: &PlayerAssets,
+    player_state: &Res<State<PlayerState>>,
+    player_assets: &Res<PlayerAssets>,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
     facing: FacingDirection,
 ) -> impl Bundle {
     // A texture atlas is a way to split a single image into a grid of related images.
     // You can learn more in this example: https://github.com/bevyengine/bevy/blob/latest/examples/2d/texture_atlas.rs
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(64), 4, 4, Some(UVec2::splat(1)), None);
+    let layout= TextureAtlasLayout::from_grid(UVec2::splat(64), 4, 3, Some(UVec2::splat(1)), None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new(facing);
-    
+
+    let name: &str;
+    match player_state.get() {
+        PlayerState::Awake => name = "AwakePlayer",
+        PlayerState::Asleep => name = "AsleepPlayer",
+    }
+
     (
-        Name::new("Player"),
-        Player,
+        Name::new(name),
         TouchingBrokenBridge::default(),
         Sprite::from_atlas_image(
-            player_assets.ducky.clone(),
+            match player_state.get() {
+                PlayerState::Awake => player_assets.player_awake.clone(),
+                PlayerState::Asleep => player_assets.player_ghost.clone(),
+            },
             TextureAtlas {
                 layout: texture_atlas_layout,
                 index:0,
@@ -73,13 +79,19 @@ pub fn player(
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
-pub struct Player;
+pub struct AwakePlayer;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component)]
+pub struct GhostPlayer;
 
 #[derive(Resource, Asset, Clone, Reflect)]
 #[reflect(Resource)]
 pub struct PlayerAssets {
     #[dependency]
-    ducky: Handle<Image>,
+    player_awake: Handle<Image>,
+    #[dependency]
+    player_ghost: Handle<Image>,
     #[dependency]
     pub steps: Vec<Handle<AudioSource>>,
 }
@@ -93,8 +105,15 @@ impl FromWorld for PlayerAssets {
     fn from_world(world: &mut World) -> Self {
         let assets = world.resource::<AssetServer>();
         Self {
-            ducky: assets.load_with_settings(
+            player_awake: assets.load_with_settings(
                 "images/Witch(Awake)-Sheet.png",
+                |settings: &mut ImageLoaderSettings| {
+                    // Use `nearest` image sampling to preserve pixel art style.
+                    settings.sampler = ImageSampler::nearest();
+                },
+            ),
+            player_ghost: assets.load_with_settings(
+                "images/Witch(Asleep)-Sheet.png",
                 |settings: &mut ImageLoaderSettings| {
                     // Use `nearest` image sampling to preserve pixel art style.
                     settings.sampler = ImageSampler::nearest();

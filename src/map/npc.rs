@@ -1,6 +1,6 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, prelude::*};
 
-use crate::{asset_tracking::LoadResource, game_consts::{NPC_ATLAS_COLS, NPC_ATLAS_ROWS, NPC_LOCATION, OLD_HOUSE_LOCATION}, map::animation::NpcAnimation, player::action::MovementController};
+use crate::{assets::asset_tracking::LoadResource, game_consts::{NPC_ATLAS_COLS, NPC_ATLAS_ROWS, NPC_LOCATION, OLD_HOUSE_LOCATION}, map::animation::NpcAnimation, player::action::MovementController};
 
 pub(super) fn plugin(app: &mut App) {
     app.load_resource::<NpcAssets>();

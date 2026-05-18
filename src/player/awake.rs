@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{game_consts::PLAYER_SPEED, player::{PlayerState, action::{MovementController, PlayerAction}, player::Player, player_ghost::player_ghost::GhostPlayer}};
+use crate::{game_consts::PLAYER_SPEED, player::{PlayerState, action::{MovementController, PlayerAction}, player::{AwakePlayer, GhostPlayer}}};
 use::leafwing_input_manager::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
@@ -21,7 +21,7 @@ fn despawn_ghost_player(
 // Restores player movement when player is awake.
 fn restore_player_movement(
     mut commands: Commands,
-    player_query: Query<Entity, With<Player>>,
+    player_query: Query<Entity, With<AwakePlayer>>,
 ) {
     for entity in &player_query {
         commands.entity(entity)

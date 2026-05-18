@@ -5,10 +5,9 @@
 
 use bevy::prelude::*;
 
-pub mod animation;
+
 pub mod action;
 pub mod player;
-pub mod player_ghost;
 mod asleep;
 mod awake;
 mod camera;
@@ -19,10 +18,8 @@ pub(super) fn plugin(app: &mut App) {
     app.init_state::<PlayerState>();
     
     app.add_plugins((
-        animation::plugin,
         action::plugin,
         player::plugin,
-        player_ghost::plugin,
         asleep::plugin,
         awake::plugin,
         camera::plugin,
