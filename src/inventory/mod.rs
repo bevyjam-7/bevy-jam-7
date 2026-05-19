@@ -4,12 +4,13 @@ pub mod systems;
 use bevy::prelude::*;
 
 use crate::{
-    AppSystems, PausableSystems,
-    inventory::{inventory::Inventory, systems::handle_pickups},
+    inventory::{inventory::Inventory},
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<Inventory>();
 
-    app.add_plugins((inventory::plugin, systems::plugin));
+    app.add_plugins(
+        systems::plugin
+    );
 }

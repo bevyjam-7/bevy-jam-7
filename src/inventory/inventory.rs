@@ -4,8 +4,6 @@ use std::fmt;
 
 use crate::game_consts::pickup::DEFAULT_RADIUS;
 
-pub(super) fn plugin(app: &mut App) {}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ItemKind {
     Food1,

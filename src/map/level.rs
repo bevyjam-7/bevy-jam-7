@@ -30,7 +30,7 @@ use crate::{
         PlayerState,
         player::{AwakePlayer, PlayerAssets, player},
     },
-    screens::Screen,
+    game_gui::screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {

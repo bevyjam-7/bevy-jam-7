@@ -11,10 +11,8 @@ mod dialogue;
 pub mod game_consts;
 mod inventory;
 mod map;
-mod menus;
 mod player;
-mod screens;
-mod theme;
+mod game_gui;
 
 use avian2d::{PhysicsPlugins, prelude::Gravity};
 
@@ -67,11 +65,9 @@ impl Plugin for AppPlugin {
             player::plugin,
             #[cfg(feature = "dev")]
             dev_tools::plugin,
-            menus::plugin,
-            screens::plugin,
-            theme::plugin,
             map::plugin,
             inventory::plugin,
+            game_gui::plugin,
         ));
 
         // Order new `AppSystems` variants by adding them here:

@@ -11,7 +11,7 @@ use crate::{
         action::MovementController,
         player::{AwakePlayer, GhostPlayer},
     },
-    screens::Screen,
+    game_gui::screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {

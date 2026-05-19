@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{AppSystems, screens::Screen, theme::prelude::*};
+use crate::{AppSystems, game_gui::{screens::Screen, theme::widget}};
 
 pub(super) fn plugin(app: &mut App) {
     // Spawn splash screen.

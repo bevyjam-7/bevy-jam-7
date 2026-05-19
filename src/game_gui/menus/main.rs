@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::{assets::asset_tracking::ResourceHandles, menus::Menu, screens::Screen, theme::widget};
+use crate::{assets::asset_tracking::ResourceHandles, game_gui::{menus::Menu, screens::Screen, theme::widget}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Main), spawn_main_menu);

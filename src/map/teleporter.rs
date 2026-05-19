@@ -9,7 +9,7 @@ use crate::{
         PlayerState,
         player::GhostPlayer,
     },
-    screens::Screen,
+    game_gui::screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {

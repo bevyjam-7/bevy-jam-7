@@ -1,9 +1,9 @@
 //! The game's main screen states and transitions between them.
 
-mod gameplay;
-mod loading;
-mod splash;
-mod title;
+pub mod gameplay;
+pub mod splash;
+pub mod title;
+pub mod loading;
 
 use bevy::prelude::*;
 

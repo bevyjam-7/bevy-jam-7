@@ -11,9 +11,6 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(Update, update_inventory_ui);
 }
 
-#[derive(EntityEvent)]
-struct PickupEvent(Entity);
-
 pub fn drop_item(
     mut commands: Commands,
     mut inventory: ResMut<Inventory>,

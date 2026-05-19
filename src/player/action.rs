@@ -23,7 +23,7 @@ use crate::map::level::{BridgeSection, MapAssets};
 use crate::map::npc::NpcInteractionBox;
 use crate::map::teleporter::Teleportable;
 use crate::player::player::{AwakePlayer, GhostPlayer};
-use crate::screens::Screen::Gameplay;
+use crate::game_gui::screens::Screen::Gameplay;
 use crate::{
     AppSystems, PausableSystems,
     inventory::{

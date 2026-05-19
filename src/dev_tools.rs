@@ -1,11 +1,8 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
-use crate::{Pause, screens::Screen};
+use crate::{Pause, game_gui::screens::Screen};
 use avian2d::prelude::{PhysicsDebugPlugin, PhysicsGizmos};
-use bevy::{
-    color::palettes::css::BLUE, dev_tools::states::log_transitions,
-    input::common_conditions::input_just_pressed, prelude::*,
-};
+use bevy::{color::palettes::css::BLUE, dev_tools::states::log_transitions, input::common_conditions::input_just_pressed, prelude::*};
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 
 pub(super) fn plugin(app: &mut App) {
