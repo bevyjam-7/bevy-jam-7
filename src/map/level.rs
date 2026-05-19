@@ -3,7 +3,7 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, mesh::RectangleMeshBuilder, prelude::*, render::render_resource::Texture};
 
 use crate::{
-    assets::{animation::FacingDirection, asset_tracking::LoadResource}, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, PLAYER_SPEED, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, Y_BRIDGE_SECTION_BORDER_OFFSETS}, map::{animation::HouseAnimation, borders::{spawn_box_borders, spawn_broken_bridge_collision}, events::{GameProgressTracker, MapSection, TranstionBetweenSections}, npc::{NpcAssets, interaction_box_bundle, spawn_npc}, object::spawn_object, old_bookshelf, teleporter::{create_teleporter_pair, link_teleporters}}, player::{PlayerState, player::{AwakePlayer, GhostPlayer, PlayerAssets, player}}, screens::Screen,
+    assets::{animation::{FacingDirection, StaticAnimation}, asset_tracking::LoadResource}, audio::music, game_consts::{BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, PLAYER_SPEED, SCENE_TILE_SIZES, TELEPORTER_A_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, Y_BRIDGE_SECTION_BORDER_OFFSETS}, map::{borders::{spawn_box_borders, spawn_broken_bridge_collision}, events::{GameProgressTracker, MapSection, TranstionBetweenSections}, npc::{NpcAssets, interaction_box_bundle, spawn_npc}, object::spawn_object, old_bookshelf, teleporter::{create_teleporter_pair, link_teleporters}}, player::{PlayerState, player::{AwakePlayer, GhostPlayer, PlayerAssets, player}}, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -177,7 +177,7 @@ pub fn witch_house_map(
 ) -> impl Bundle {
     let layout = TextureAtlasLayout::from_grid(SCENE_TILE_SIZES, WITCH_HOUSE_ATLAS_COLS, WITCH_HOUSE_ATLAS_ROWS, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    let house_animation = HouseAnimation::new();
+    let house_animation = StaticAnimation::new(WITCH_HOUSE_ATLAS_COLS as usize);
     (
         Name::new("Witch House"),
         WitchHouse,

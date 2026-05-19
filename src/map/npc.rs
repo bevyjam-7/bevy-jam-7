@@ -1,6 +1,6 @@
 use bevy::{image::{ImageLoaderSettings, ImageSampler}, prelude::*};
 
-use crate::{assets::asset_tracking::LoadResource, game_consts::{NPC_ATLAS_COLS, NPC_ATLAS_ROWS, NPC_LOCATION, OLD_HOUSE_LOCATION}, map::animation::NpcAnimation, player::action::MovementController};
+use crate::{assets::{animation::StaticAnimation, asset_tracking::LoadResource}, game_consts::{NPC_ATLAS_COLS, NPC_ATLAS_ROWS, NPC_LOCATION, OLD_HOUSE_LOCATION}, player::action::MovementController};
 
 pub(super) fn plugin(app: &mut App) {
     app.load_resource::<NpcAssets>();
@@ -12,7 +12,7 @@ pub fn spawn_npc(
 ) -> impl Bundle {
     let layout = TextureAtlasLayout::from_grid(UVec2::splat(128), NPC_ATLAS_COLS as u32, NPC_ATLAS_ROWS as u32, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    let npc_animation = NpcAnimation::new();
+    let npc_animation = StaticAnimation::new(NPC_ATLAS_COLS);
     (
         Name::new("Npc"),   
         Npc,

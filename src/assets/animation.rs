@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::prelude::*;
 use std::time::Duration;
 
-use crate::{AppSystems, PausableSystems, audio::sound_effect, player::{PlayerState, action::MovementController, player::PlayerAssets}};
+use crate::{AppSystems, PausableSystems, audio::sound_effect, map::npc::Npc, player::{PlayerState, action::MovementController, player::PlayerAssets}};
 
 pub(super) fn plugin(app: &mut App) {
     // Animate and play sound effects based on controls.
@@ -19,6 +19,19 @@ pub(super) fn plugin(app: &mut App) {
                 .in_set(AppSystems::Update),
         )
             .in_set(PausableSystems),
+    );
+
+        app.add_systems(
+        Update,
+        (
+        update_static_animation_timer.in_set(AppSystems::TickTimers),
+        (
+            update_static_animation_atlas,
+            gaze_follow_player
+        )
+            .chain()
+            .in_set(AppSystems::Update)
+        ).in_set(PausableSystems)
     );
 }
 
@@ -54,7 +67,10 @@ pub enum FacingDirection {
 
 
 /// Update the animation timer.
-fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation, With<MovementController>>) {
+fn update_animation_timer(
+    time: Res<Time>, 
+    mut query: Query<&mut PlayerAnimation, With<MovementController>>
+) {
     for mut animation in &mut query {
         animation.update_timer(time.delta());
     }
@@ -241,6 +257,90 @@ impl PlayerAnimation {
             PlayerAnimationState::WalkingSide => 0 + self.frame,
             PlayerAnimationState::WalkingUp => 8 + self.frame,
             PlayerAnimationState::WalkingDown => 4 + self.frame,
+        }
+    }
+}
+
+/// Static animator, for simple objects who have animations
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct StaticAnimation {
+    timer: Timer,
+    frame: usize,
+    state_changed: bool,
+    atlas_cols: usize,
+}
+
+fn update_static_animation_timer(
+    time: Res<Time>,
+    mut query: Query<&mut StaticAnimation>,
+) {
+    for mut animation in &mut query {
+        animation.update_timer(time.delta());
+    }
+}
+
+fn update_static_animation_atlas(
+    mut query: Query<(&mut StaticAnimation, &mut Sprite)>,
+) {
+    for (mut animation, mut sprite) in &mut query {
+        let Some(atlas) = sprite.texture_atlas.as_mut() else {
+            continue;
+        };
+        if animation.should_update_sprite() {
+            atlas.index = animation.get_atlas_index();
+        }
+    }
+}
+
+impl StaticAnimation {
+    const STATIC_FRAME_DURATION: Duration = Duration::from_millis(500);
+
+    pub fn new(cols: usize) -> Self {
+        Self {
+            timer: Timer::new(Self::STATIC_FRAME_DURATION, TimerMode::Repeating),
+            frame: 0,
+            state_changed: true,
+            atlas_cols: cols,
+        }
+    }
+
+    pub fn update_timer(&mut self, delta: Duration) {
+        self.timer.tick(delta);
+        if !self.timer.just_finished() {
+            return;
+        }
+        // println!("npc animation frame: {}", self.frame);
+        self.frame = (self.frame + 1) % self.atlas_cols;
+    }
+
+    /// Whether animation changed this tick.
+    pub fn should_update_sprite(&mut self) -> bool {
+        let frame_advanced = self.timer.is_finished();
+        let changed = frame_advanced || self.state_changed;
+        self.state_changed = false;
+        changed
+    }
+
+    pub fn get_atlas_index(&self) -> usize {
+        self.frame
+    }
+}
+
+fn gaze_follow_player(
+    player_query: Query<&Transform, (With<MovementController>, Without<Npc>)>,
+    mut npc_query: Query<(&Transform, &mut Sprite), (With<Npc>, Without<MovementController>)>,
+) {
+    let Ok(player_transform) = player_query.single() else {
+        return;
+    };
+
+    for (npc_transform, mut npc_sprite) in npc_query.iter_mut() {
+        // player is to the left of the npc
+        if player_transform.translation.x < npc_transform.translation.x {
+            npc_sprite.flip_x = false;
+        } else {
+            npc_sprite.flip_x = true;
         }
     }
 }

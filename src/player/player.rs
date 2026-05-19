@@ -55,15 +55,25 @@ pub fn player(
         RigidBody::Dynamic,
         LockedAxes::ROTATION_LOCKED,
         Collider::rectangle(30., 20.),
-        CollisionLayers::new(
-            GameLayer::Player,
-            [
-                GameLayer::Default,
-                GameLayer::Border,
-                GameLayer::BrokenBridge,
-                GameLayer::OldBookshelf,
-            ],
-        ),
+        match player_state.get() {
+            PlayerState::Awake => CollisionLayers::new(
+                GameLayer::Player,
+                [
+                    GameLayer::Default,
+                    GameLayer::Border,
+                    GameLayer::BrokenBridge,
+                    GameLayer::OldBookshelf,
+                ],
+            ),
+            PlayerState::Asleep => CollisionLayers::new(
+                GameLayer::GhostPlayer,
+                [
+                    GameLayer::Default,
+                    GameLayer::Border,
+                ],
+            ),
+        },
+
         LinearVelocity::default(),
         ActionTimer {
             timer: Timer::from_seconds(0.5, TimerMode::Once)
@@ -128,3 +138,4 @@ impl FromWorld for PlayerAssets {
         }
     }
 }
+
