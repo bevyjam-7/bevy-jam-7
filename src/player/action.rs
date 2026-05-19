@@ -13,20 +13,30 @@
 //! purposes. If you want to move the player in a smoother way,
 //! consider using a [fixed timestep](https://github.com/bevyengine/bevy/blob/main/examples/movement/physics_in_fixed_timestep.rs).
 
-use avian2d::math::AdjustPrecision;
-use avian2d::prelude::{Collider, LinearVelocity, SpatialQuery, SpatialQueryFilter};
-use bevy::{prelude::*, window::PrimaryWindow};
-use leafwing_input_manager::prelude::*;
-use crate::game_consts::{PLAYER_SPEED, TELEPORTER_B_LOCATION};
+use crate::game_consts::PLAYER_SPEED;
 use crate::inventory::inventory::ItemKind;
 use crate::map::borders::BrokenBridgeCollider;
-use crate::map::events::{BreadOnTeleporterB, DialogueSelected, GameProgressTracker, SpawnRewardEvent};
+use crate::map::events::{
+    DialogueSelected, GameProgressTracker, SpawnRewardEvent,
+};
 use crate::map::level::{BridgeSection, MapAssets};
 use crate::map::npc::NpcInteractionBox;
-use crate::player::player::{AwakePlayer, GhostPlayer};
-use crate::screens::Screen::{self, Gameplay};
-use crate::{AppSystems, PausableSystems, inventory::{inventory::{Inventory, ObjectPickable}, systems::{drop_item, handle_pickups}}, map::teleporter::{self, Teleporter}, player::{PlayerState, player::ActionTimer}};
 use crate::map::teleporter::Teleportable;
+use crate::player::player::{AwakePlayer, GhostPlayer};
+use crate::screens::Screen::Gameplay;
+use crate::{
+    AppSystems, PausableSystems,
+    inventory::{
+        inventory::{Inventory, ObjectPickable},
+        systems::{drop_item, handle_pickups},
+    },
+    map::teleporter::Teleporter,
+    player::{PlayerState, player::ActionTimer},
+};
+use avian2d::math::AdjustPrecision;
+use avian2d::prelude::{Collider, LinearVelocity, SpatialQuery, SpatialQueryFilter};
+use bevy::prelude::*;
+use leafwing_input_manager::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -36,20 +46,21 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(AppSystems::Update)
             .in_set(PausableSystems),
     );
-    
-    app.add_systems(Update, 
+
+    app.add_systems(
+        Update,
         (
-            apply_state_switch, 
-            pick_up_item_action, 
-            drop_item_action, 
-            teleport_entity, 
+            apply_state_switch,
+            pick_up_item_action,
+            drop_item_action,
+            teleport_entity,
             talk_to_npc,
             detect_broken_bridge_collision,
             fix_bridge,
         )
-        .chain()
-        .in_set(AppSystems::RecordInput)
-        .in_set(PausableSystems)
+            .chain()
+            .in_set(AppSystems::RecordInput)
+            .in_set(PausableSystems),
     );
 
     app.add_systems(OnExit(Gameplay), (force_awake_state, reset_action_timer));
@@ -76,7 +87,7 @@ impl PlayerAction {
         input_map.insert(Self::Honkshoo, GamepadButton::East);
         input_map.insert(Self::Pickup, GamepadButton::DPadUp);
         input_map.insert(Self::Drop, GamepadButton::DPadDown);
-        input_map.insert(Self::Interact , GamepadButton::South);
+        input_map.insert(Self::Interact, GamepadButton::South);
 
         // Default keyboard mapping for movement
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
@@ -86,8 +97,8 @@ impl PlayerAction {
         input_map.insert(Self::Honkshoo, KeyCode::Space);
         input_map.insert(Self::Pickup, KeyCode::KeyE);
         input_map.insert(Self::Drop, KeyCode::KeyR);
-        input_map.insert(Self::Interact , KeyCode::KeyQ);
-        
+        input_map.insert(Self::Interact, KeyCode::KeyQ);
+
         input_map
     }
 }
@@ -97,8 +108,8 @@ fn drop_item_action(
     inventory: ResMut<Inventory>,
     player_query: Query<&Transform, With<AwakePlayer>>,
     action_query: Query<&ActionState<PlayerAction>, With<AwakePlayer>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
 ) {
     if let Ok(action_state) = action_query.single() {
         if action_state.just_pressed(&PlayerAction::Drop) {
@@ -116,32 +127,35 @@ fn teleport_entity(
     let Ok(action_state) = action_query.single() else {
         return;
     };
-    
+
     if !action_state.just_pressed(&PlayerAction::Interact) {
         return;
     }
-    
+
     // Collect teleportation data first (immutable pass)
     let mut teleports_to_perform = Vec::new();
-    
+
     for (item_entity, teleportable) in &teleportable_query {
         let Ok(teleporter) = teleporter_query.get(teleportable.on_teleporter_entity) else {
             continue;
         };
-        
+
         if !teleporter.can_teleport {
             continue;
         }
-        
+
         let Ok(buddy_teleporter) = teleporter_query.get(teleporter.tele_buddy) else {
             continue;
         };
-        
+
         if buddy_teleporter.containing_entity != Entity::PLACEHOLDER {
-            info!("\nBuddy teleporter occupied by entity {:?}, cannot teleport", buddy_teleporter.containing_entity);
+            info!(
+                "\nBuddy teleporter occupied by entity {:?}, cannot teleport",
+                buddy_teleporter.containing_entity
+            );
             continue;
         }
-        
+
         // Store the data we need for teleportation
         teleports_to_perform.push((
             item_entity,
@@ -150,25 +164,27 @@ fn teleport_entity(
             teleporter.destination,
         ));
     }
-    
+
     // Now perform the teleportations (mutable pass)
     for (item_entity, source_tp, buddy_tp, destination) in teleports_to_perform {
         // Clear source teleporter
         if let Ok(mut teleporter) = teleporter_query.get_mut(source_tp) {
             teleporter.containing_entity = Entity::PLACEHOLDER;
         }
-        
+
         // Set buddy teleporter
         if let Ok(mut buddy) = teleporter_query.get_mut(buddy_tp) {
             buddy.containing_entity = item_entity;
         }
-        
+
         // Update item
-        commands.entity(item_entity).insert(Teleportable { 
-            on_teleporter_entity: buddy_tp 
+        commands.entity(item_entity).insert(Teleportable {
+            on_teleporter_entity: buddy_tp,
         });
-        commands.entity(item_entity).insert(Transform::from_translation(destination));
-        
+        commands
+            .entity(item_entity)
+            .insert(Transform::from_translation(destination));
+
         info!("\nTeleported item {:?} to {:?}", item_entity, destination);
     }
 }
@@ -188,24 +204,32 @@ fn pick_up_item_action(
             for (entity, _, _) in &pickables {
                 if let Ok(teleportable) = teleportable_query.get(entity) {
                     // Item is on a teleporter - unlink it first
-                    if let Ok(mut teleporter) = teleporter_query.get_mut(teleportable.on_teleporter_entity) {
+                    if let Ok(mut teleporter) =
+                        teleporter_query.get_mut(teleportable.on_teleporter_entity)
+                    {
                         teleporter.containing_entity = Entity::PLACEHOLDER;
                         info!("\nCleared teleporter before pickup");
                     }
                     commands.entity(entity).remove::<Teleportable>();
                 }
             }
-            
+
             handle_pickups(commands, inventory, player_query, pickables);
         }
     }
 }
 
-
 fn apply_state_switch(
     player_state: ResMut<State<PlayerState>>,
     mut next_player_state: ResMut<NextState<PlayerState>>,
-    mut action_query: Query<(&ActionState<PlayerAction>, &mut MovementController, &mut ActionTimer), Or<(With<AwakePlayer>, With<GhostPlayer>)>>,
+    mut action_query: Query<
+        (
+            &ActionState<PlayerAction>,
+            &mut MovementController,
+            &mut ActionTimer,
+        ),
+        Or<(With<AwakePlayer>, With<GhostPlayer>)>,
+    >,
     player_query: Query<&GlobalTransform, (With<AwakePlayer>, Without<GhostPlayer>)>,
     ghost_query: Query<&GlobalTransform, (With<GhostPlayer>, Without<AwakePlayer>)>,
     time: Res<Time>,
@@ -215,7 +239,10 @@ fn apply_state_switch(
     for (action_state, mut controller, mut action_timer) in action_query.iter_mut() {
         // Set movement intent based on input actions, which are normalized to length 1.
         // If no input is pressed, this will be the zero vector.
-        controller.intent = action_state.clamped_axis_pair(&PlayerAction::Move).xy().normalize_or_zero();
+        controller.intent = action_state
+            .clamped_axis_pair(&PlayerAction::Move)
+            .xy()
+            .normalize_or_zero();
 
         action_timer.timer.tick(time.delta());
 
@@ -225,8 +252,12 @@ fn apply_state_switch(
                 next_player_state.set(PlayerState::Asleep);
                 println!("\nAsleep state applied")
             } else if player_state.get() == &PlayerState::Asleep {
-                if let (Ok(player_transform), Ok(ghost_transform)) = (player_query.single(), ghost_query.single()) {
-                    let distance = player_transform.translation().distance(ghost_transform.translation());
+                if let (Ok(player_transform), Ok(ghost_transform)) =
+                    (player_query.single(), ghost_query.single())
+                {
+                    let distance = player_transform
+                        .translation()
+                        .distance(ghost_transform.translation());
 
                     if distance <= WAKE_UP_DISTANCE {
                         next_player_state.set(PlayerState::Awake);
@@ -234,8 +265,7 @@ fn apply_state_switch(
                     } else {
                         info!("\nToo far from ghost to wake up!");
                     }
-                }
-                else {
+                } else {
                     info!("\nGhost not found - waking up anyway");
                     next_player_state.set(PlayerState::Awake);
                 }
@@ -245,13 +275,11 @@ fn apply_state_switch(
     }
 }
 
-
 fn apply_movement(
     time: Res<Time>,
     mut movement_query: Query<(&mut LinearVelocity, &MovementController)>,
 ) {
     for (mut velocity, controller) in &mut movement_query {
-        
         let delta_time = time.delta_secs_f64().adjust_precision();
 
         velocity.x = controller.intent.x * controller.max_speed * delta_time;
@@ -260,17 +288,13 @@ fn apply_movement(
 }
 
 // Force player to Awake state when exiting gameplay
-fn force_awake_state(
-    mut next_player_state: ResMut<NextState<PlayerState>>,
-) {
+fn force_awake_state(mut next_player_state: ResMut<NextState<PlayerState>>) {
     next_player_state.set(PlayerState::Awake);
     info!("\nForced player state to Awake on exit");
 }
 
 // resets action timer when exiting gameplay
-fn reset_action_timer(
-    mut timer_query: Query<&mut ActionTimer, With<AwakePlayer>>,
-) {
+fn reset_action_timer(mut timer_query: Query<&mut ActionTimer, With<AwakePlayer>>) {
     for mut action_timer in &mut timer_query {
         // Set the timer as finished by setting elapsed time to duration
         let duration = action_timer.timer.duration();
@@ -319,17 +343,21 @@ fn talk_to_npc(
     if action_state.just_pressed(&PlayerAction::Interact) {
         for interaction_box in interaction_boxes.iter() {
             if interaction_box.can_talk {
-                commands.trigger(DialogueSelected { s: "TalkNpc".to_string() });
+                commands.trigger(DialogueSelected {
+                    s: "TalkNpc".to_string(),
+                });
                 if progress.bread_in_old_house {
                     for (bread, tp) in &bread_query {
                         commands.entity(bread).despawn();
                         // Unlinks tp
-                        if let Ok(mut teleporter) = teleporter_query.get_mut(tp.on_teleporter_entity) {
+                        if let Ok(mut teleporter) =
+                            teleporter_query.get_mut(tp.on_teleporter_entity)
+                        {
                             teleporter.containing_entity = Entity::PLACEHOLDER;
                         }
 
                         commands.trigger(SpawnRewardEvent);
-                    };
+                    }
                 }
             }
         }
@@ -342,22 +370,21 @@ pub struct TouchingBrokenBridge {
     pub is_touching: bool,
 }
 
-
 // System to detect collision with broken bridge using spatial queries
 fn detect_broken_bridge_collision(
     spatial_query: SpatialQuery,
-    player_query: Query<(Entity, &Transform, &Collider), With<AwakePlayer>>,
+    player_query: Query<(&Transform, &Collider), With<AwakePlayer>>,
     mut touching_query: Query<&mut TouchingBrokenBridge, With<AwakePlayer>>,
     broken_bridge_query: Query<Entity, With<BrokenBridgeCollider>>,
 ) {
-    let Ok((player_entity, player_transform, player_collider)) = player_query.single() else {
+    let Ok((player_transform, player_collider)) = player_query.single() else {
         return;
     };
-    
+
     let Ok(mut touching) = touching_query.single_mut() else {
         return;
     };
-    
+
     // Use shape casting to check for overlap
     let hits = spatial_query.shape_intersections(
         player_collider,
@@ -365,9 +392,9 @@ fn detect_broken_bridge_collision(
         player_transform.rotation.to_euler(EulerRot::XYZ).2,
         &SpatialQueryFilter::default(),
     );
-    
+
     touching.is_touching = false;
-    
+
     for hit_entity in hits {
         if broken_bridge_query.get(hit_entity).is_ok() {
             touching.is_touching = true;
@@ -390,7 +417,7 @@ fn fix_bridge(
     let Ok(action_state) = action_state.single() else {
         return;
     };
-    
+
     let Ok(touching) = touching_query.single() else {
         info!("Could not get touching query");
         return;
@@ -398,29 +425,29 @@ fn fix_bridge(
     let Some(map_assets) = map_assets else {
         return;
     };
-    
+
     // Check if player pressed the interact button (T key)
     if action_state.just_pressed(&PlayerAction::Interact) {
         info!("Interact pressed! Touching: {}", touching.is_touching);
-        
+
         // Check if player is touching broken bridge
         if !touching.is_touching {
             return;
         }
-        
+
         // Check if player has bridge piece in inventory
         if inventory.get(ItemKind::Object1).is_none() {
             info!("You need a bridge piece to fix this!");
             return;
         }
-        
+
         info!("Fixing the bridge!");
-        
+
         // Remove bridge piece from inventory
         inventory.remove(ItemKind::Object1);
-        
+
         // Despawn all broken bridge colliders
-        for bridge_entity in &broken_bridge_query { 
+        for bridge_entity in &broken_bridge_query {
             commands.entity(bridge_entity).despawn();
             let Ok(mut bridge_sprite) = bridge_sprite_query.single_mut() else {
                 return;
@@ -428,7 +455,7 @@ fn fix_bridge(
             bridge_sprite.image = map_assets.fixed_bridge.clone();
             info!("Despawned broken bridge: {:?}", bridge_entity);
         }
-        
+
         info!("Bridge fixed! The way is now clear.");
     }
 }

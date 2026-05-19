@@ -4,9 +4,7 @@ use std::fmt;
 
 use crate::game_consts::pickup::DEFAULT_RADIUS;
 
-pub(super) fn plugin(app: &mut App) {
-
-}
+pub(super) fn plugin(app: &mut App) {}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ItemKind {
@@ -18,7 +16,7 @@ impl ItemKind {
     pub fn display_name(&self) -> &'static str {
         match self {
             ItemKind::Food1 => "Bread",
-            ItemKind::Object1 => "Bridge Piece"
+            ItemKind::Object1 => "Bridge Piece",
         }
     }
 }
@@ -69,7 +67,7 @@ impl Inventory {
             }
         }
     }
-    
+
     /// Get the item type
     pub fn get(&self, kind: ItemKind) -> Option<ItemKind> {
         if self.items.contains_key(&kind) {

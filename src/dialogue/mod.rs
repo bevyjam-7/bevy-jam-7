@@ -1,10 +1,9 @@
 use bevy::prelude::*;
-use bevy_yarnspinner::prelude::YarnSpinnerPlugin;
 
 pub mod assets;
+pub mod option_selection;
 pub mod setup;
 pub mod typewriter;
-pub mod option_selection;
 pub mod updating;
 
 #[derive(Debug, Default, Clone, Copy, SystemSet, Eq, PartialEq, Hash)]

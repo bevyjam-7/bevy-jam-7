@@ -1,11 +1,12 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
+use crate::{Pause, screens::Screen};
 use avian2d::prelude::{PhysicsDebugPlugin, PhysicsGizmos};
 use bevy::{
-    color::palettes::css::BLUE, dev_tools::states::log_transitions, input::common_conditions::input_just_pressed, prelude::*
+    color::palettes::css::BLUE, dev_tools::states::log_transitions,
+    input::common_conditions::input_just_pressed, prelude::*,
 };
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
-use crate::{Pause, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     // Log `Screen` state transitions.
@@ -17,14 +18,13 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         toggle_debug_ui.run_if(input_just_pressed(TOGGLE_KEY)),
     );
-    app
-        .add_plugins(PhysicsDebugPlugin::default())
+    app.add_plugins(PhysicsDebugPlugin::default())
         .insert_gizmo_config(
-                PhysicsGizmos {
-                    aabb_color: Some(Color::from(BLUE)),
-                    ..default()
-                },
-                GizmoConfig::default(),
+            PhysicsGizmos {
+                aabb_color: Some(Color::from(BLUE)),
+                ..default()
+            },
+            GizmoConfig::default(),
         );
     app.add_plugins(EguiPlugin::default());
     app.add_plugins(WorldInspectorPlugin::new());

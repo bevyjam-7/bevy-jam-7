@@ -1,4 +1,11 @@
-use crate::{ExampleYarnSpinnerDialogueViewSystemSet, Pause, dialogue::{YarnSpinnerDialogueViewSystemSet, option_selection::OptionSelection, setup::{DialogueContinueNode, DialogueNode, UiRootNode, create_dialog_text}, updating::SpeakerChangeEvent}};
+use crate::{
+    dialogue::{
+        YarnSpinnerDialogueViewSystemSet,
+        option_selection::OptionSelection,
+        setup::{DialogueContinueNode, DialogueNode, UiRootNode, create_dialog_text},
+        updating::SpeakerChangeEvent,
+    },
+};
 use bevy::platform::time::Instant;
 use bevy::prelude::*;
 use bevy_yarnspinner::{events::*, prelude::*};

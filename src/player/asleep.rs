@@ -1,9 +1,17 @@
 use avian2d::prelude::LinearVelocity;
 use bevy::prelude::*;
 
-use crate::{assets::animation::{FacingDirection, PlayerAnimation, PlayerAnimationState}, map::events::DialogueSelected, player::{PlayerState, action::{MovementController, PlayerAction}, player::{AwakePlayer, GhostPlayer, PlayerAssets, player}}};
-use leafwing_input_manager::prelude::*;
 use crate::map::level::Level;
+use crate::{
+    assets::animation::{FacingDirection, PlayerAnimation, PlayerAnimationState},
+    map::events::DialogueSelected,
+    player::{
+        PlayerState,
+        action::{MovementController, PlayerAction},
+        player::{AwakePlayer, GhostPlayer, PlayerAssets, player},
+    },
+};
+use leafwing_input_manager::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -12,17 +20,19 @@ pub(super) fn plugin(app: &mut App) {
             remove_initial_player_movement,
             reset_player_animation_to_idle,
             spawn_ghost_player,
-        ).chain(),
+        )
+            .chain(),
     );
 }
 
 // Take movement away from original player
 pub fn remove_initial_player_movement(
     mut commands: Commands,
-    mut player_query: Query<(Entity, &mut LinearVelocity) , With<AwakePlayer>>,
+    mut player_query: Query<(Entity, &mut LinearVelocity), With<AwakePlayer>>,
 ) {
     for (entity, mut velocity) in player_query.iter_mut() {
-        commands.entity(entity)
+        commands
+            .entity(entity)
             .remove::<MovementController>()
             .remove::<ActionState<PlayerAction>>()
             .remove::<InputMap<PlayerAction>>();
@@ -44,23 +54,26 @@ fn spawn_ghost_player(
     if let Ok(level_entity) = level_query.single() {
         if let Ok(player_transform) = player_query.single() {
             commands.entity(level_entity).with_children(|parent| {
-                parent.spawn(
-                    player(
+                parent
+                    .spawn(player(
                         &player_state,
                         &player_assets,
                         &mut texture_atlas_layouts,
                         FacingDirection::Side,
-                    )
-                ).insert(Transform {
-                    translation: player_transform.translation.with_z(1.0), // Player position with custom z
-                    scale: Vec2::splat(2.0).extend(1.0), // Preserve the scale from ghost_player
-                    ..default()
-                }).insert(GhostPlayer);
+                    ))
+                    .insert(Transform {
+                        translation: player_transform.translation.with_z(1.0), // Player position with custom z
+                        scale: Vec2::splat(2.0).extend(1.0), // Preserve the scale from ghost_player
+                        ..default()
+                    })
+                    .insert(GhostPlayer);
             });
             info!("\nSpawned ghost player as child of level entity");
         }
     }
-    commands.trigger(DialogueSelected { s: "GhostForm".to_string() });
+    commands.trigger(DialogueSelected {
+        s: "GhostForm".to_string(),
+    });
 }
 // Reset player animation to idle when falling asleep
 fn reset_player_animation_to_idle(

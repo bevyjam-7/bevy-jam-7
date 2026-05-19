@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{inventory::inventory::{Inventory, ItemKind, ObjectPickable}, map::{events::DialogueSelected, object::spawn_object}, player::player::AwakePlayer};
+use crate::{
+    inventory::inventory::{Inventory, ItemKind, ObjectPickable},
+    map::{events::DialogueSelected, object::spawn_object},
+    player::player::AwakePlayer,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, setup_inventory_ui)
@@ -24,37 +28,42 @@ pub fn drop_item(
     };
 
     let player_pos = player_transform.translation;
-    
+
     if let Some(item_to_drop) = inventory.get(ItemKind::Food1) {
         println!("Dropping item: {}", ItemKind::Food1);
-        
 
         // For demonstration, we'll just drop a bread item
         let dropped_item = spawn_object(
             item_to_drop,
             player_pos + Vec3::new(0., 0., 1.), // Drop slightly above the player
             meshes.add(Rectangle::new(30., 20.)),
-            materials.add(ColorMaterial::from(Color::hsv(0.,1.,1.))),
+            materials.add(ColorMaterial::from(Color::hsv(0., 1., 1.))),
         );
         // Debug for location of where the item is dropped
-        println!("Dropped item at position: {:?}", player_pos + Vec3::new(0., 0., 1.));
+        println!(
+            "Dropped item at position: {:?}",
+            player_pos + Vec3::new(0., 0., 1.)
+        );
 
         inventory.remove(item_to_drop);
         commands.spawn(dropped_item);
         return;
-    } 
+    }
 
     if let Some(item_to_drop) = inventory.get(ItemKind::Object1) {
         println!("Dropping item: {}", ItemKind::Object1);
-        
+
         let dropped_item = spawn_object(
             item_to_drop,
             player_pos + Vec3::new(0., 0., 1.),
             meshes.add(Rectangle::new(40., 15.)),
             materials.add(ColorMaterial::from(Color::srgb(0.55, 0.27, 0.07))), // Brown color
         );
-        
-        println!("Dropped item at position: {:?}", player_pos + Vec3::new(0., 0., 1.));
+
+        println!(
+            "Dropped item at position: {:?}",
+            player_pos + Vec3::new(0., 0., 1.)
+        );
         inventory.remove(item_to_drop);
         commands.spawn(dropped_item);
         return;
@@ -97,10 +106,14 @@ pub fn handle_pickups(
     for (entity, kind) in collected {
         commands.entity(entity).despawn();
         let count = inventory.add(kind);
-        commands.trigger(DialogueSelected { s: "AcquireFirstItem".to_string() });
+        commands.trigger(DialogueSelected {
+            s: "AcquireFirstItem".to_string(),
+        });
         info!(
             " Picked up {} (total: {}) — inventory: {}",
-            kind, count, inventory.summary()
+            kind,
+            count,
+            inventory.summary()
         );
     }
 }
@@ -108,39 +121,36 @@ pub fn handle_pickups(
 #[derive(Component)]
 struct InventoryText;
 
-fn setup_inventory_ui(
-    mut commands: Commands,
-) {
+fn setup_inventory_ui(mut commands: Commands) {
     commands.spawn((
         Text::new("Items Collectd: "),
-    TextFont {
-        font_size: 20.0,
-        ..default()
-    },
-    TextColor(Color::srgb(1.0, 1.0, 1.0)),
-    Node{
-        position_type: PositionType::Absolute,
-        top: Val::Px(10.0),
-        left: Val::Px(10.0),
-        ..default()
-    },
-    InventoryText,
+        TextFont {
+            font_size: 20.0,
+            ..default()
+        },
+        TextColor(Color::srgb(1.0, 1.0, 1.0)),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(10.0),
+            left: Val::Px(10.0),
+            ..default()
+        },
+        InventoryText,
     ));
 }
 
 fn update_inventory_ui(
-   inventory: Res<Inventory>,
-   mut query: Query<&mut Text, With<InventoryText>>, 
+    inventory: Res<Inventory>,
+    mut query: Query<&mut Text, With<InventoryText>>,
 ) {
     if !inventory.is_changed() {
         return;
     }
 
-    let Ok(mut text) = query.single_mut() else{
+    let Ok(mut text) = query.single_mut() else {
         return;
     };
     let items_text = inventory.summary();
 
     **text = format!("Items Collected: {}", items_text);
 }
-

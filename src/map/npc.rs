@@ -1,6 +1,12 @@
-use bevy::{image::{ImageLoaderSettings, ImageSampler}, prelude::*};
+use bevy::{
+    image::{ImageLoaderSettings, ImageSampler},
+    prelude::*,
+};
 
-use crate::{assets::{animation::StaticAnimation, asset_tracking::LoadResource}, game_consts::{NPC_ATLAS_COLS, NPC_ATLAS_ROWS, NPC_LOCATION, OLD_HOUSE_LOCATION}, player::action::MovementController};
+use crate::{
+    assets::{animation::StaticAnimation, asset_tracking::LoadResource},
+    game_consts::{NPC_ATLAS_COLS, NPC_ATLAS_ROWS, NPC_LOCATION, OLD_HOUSE_LOCATION},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.load_resource::<NpcAssets>();
@@ -10,14 +16,20 @@ pub fn spawn_npc(
     npc_assets: &NpcAssets,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
 ) -> impl Bundle {
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(128), NPC_ATLAS_COLS as u32, NPC_ATLAS_ROWS as u32, None, None);
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::splat(128),
+        NPC_ATLAS_COLS as u32,
+        NPC_ATLAS_ROWS as u32,
+        None,
+        None,
+    );
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let npc_animation = StaticAnimation::new(NPC_ATLAS_COLS);
     (
-        Name::new("Npc"),   
+        Name::new("Npc"),
         Npc,
         Sprite::from_atlas_image(
-            npc_assets.npc.clone(), 
+            npc_assets.npc.clone(),
             TextureAtlas {
                 layout: texture_atlas_layout,
                 index: 0,
@@ -49,8 +61,6 @@ pub fn interaction_box_bundle() -> impl Bundle {
     )
 }
 
-
-
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
 pub struct Npc;
@@ -59,12 +69,6 @@ pub struct Npc;
 pub struct NpcInteractionBox {
     pub can_talk: bool,
     pub size: Vec2,
-}
-
-#[derive(Event)]
-pub struct PlayerOnInteractionBox {
-    pub player: Entity,
-    pub box_entity: Entity,
 }
 
 #[derive(Resource, Asset, Clone, Reflect)]
@@ -82,9 +86,8 @@ impl FromWorld for NpcAssets {
                 "images/lord_sheet.png",
                 |settings: &mut ImageLoaderSettings| {
                     settings.sampler = ImageSampler::nearest();
-                }
+                },
             ),
         }
     }
 }
-

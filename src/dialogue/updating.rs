@@ -1,5 +1,5 @@
-use crate::dialogue::YarnSpinnerDialogueViewSystemSet;
 use crate::Pause;
+use crate::dialogue::YarnSpinnerDialogueViewSystemSet;
 use crate::dialogue::option_selection::OptionSelection;
 use crate::dialogue::setup::{DialogueContinueNode, DialogueNameNode, UiRootNode};
 use crate::dialogue::typewriter::Typewriter;
@@ -37,7 +37,7 @@ pub struct SpeakerChangeEvent {
 }
 
 fn show_dialog(
-    _: On<DialogueStarted>, 
+    _: On<DialogueStarted>,
     mut visibility: Single<&mut Visibility, With<UiRootNode>>,
     mut next_pause: ResMut<NextState<Pause>>,
 ) {

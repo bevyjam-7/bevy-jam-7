@@ -1,6 +1,8 @@
-use bevy::{asset::{RenderAssetUsages, load_internal_binary_asset}, image::{CompressedImageFormats, ImageLoaderSettings, ImageSampler, ImageType}, prelude::*, text::FontLoader};
-
-use crate::assets::asset_tracking::LoadResource;
+use bevy::{
+    asset::{RenderAssetUsages, load_internal_binary_asset},
+    image::{CompressedImageFormats, ImageSampler, ImageType},
+    prelude::*,
+};
 
 pub(crate) fn ui_assets_plugin(app: &mut App) {
     load_internal_binary_asset!(

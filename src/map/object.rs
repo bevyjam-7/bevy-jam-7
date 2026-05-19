@@ -2,12 +2,6 @@ use bevy::prelude::*;
 
 use crate::inventory::inventory::{ItemKind, ObjectPickable};
 
-pub(super) fn plugin(app: &mut App) {
-
-}
-
-
-
 pub fn spawn_object(
     kind: ItemKind,
     position: Vec3,
@@ -18,6 +12,9 @@ pub fn spawn_object(
         Transform::from_translation(position),
         Mesh2d(mesh),
         MeshMaterial2d(material),
-        ObjectPickable { kind, radius: crate::game_consts::pickup::DEFAULT_RADIUS },
+        ObjectPickable {
+            kind,
+            radius: crate::game_consts::pickup::DEFAULT_RADIUS,
+        },
     )
 }

@@ -3,24 +3,23 @@
 // Disable console on Windows for non-dev builds.
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
+mod assets;
 mod audio;
-mod player;
 #[cfg(feature = "dev")]
 mod dev_tools;
-mod menus;
-mod screens;
-mod theme;
-mod map;
+mod dialogue;
 pub mod game_consts;
 mod inventory;
-mod dialogue;
-mod assets;
+mod map;
+mod menus;
+mod player;
+mod screens;
+mod theme;
 
 use avian2d::{PhysicsPlugins, prelude::Gravity};
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_yarnspinner::prelude::*;
-use bevy_yarnspinner_example_dialogue_view::prelude::*;
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
@@ -50,16 +49,16 @@ impl Plugin for AppPlugin {
                     ..default()
                 }),
         );
-        
-        app.add_plugins((
-            YarnSpinnerPlugin::with_yarn_source(YarnFileSource::file("dialogue/introduction.yarn")),
-        ));
+
+        app.add_plugins((YarnSpinnerPlugin::with_yarn_source(YarnFileSource::file(
+            "dialogue/introduction.yarn",
+        )),));
 
         app.add_plugins(dialogue::plugin);
 
-
         // Add physics
-        app.add_plugins(PhysicsPlugins::default().with_length_unit(64.)).insert_resource(Gravity(Vec2::ZERO));
+        app.add_plugins(PhysicsPlugins::default().with_length_unit(64.))
+            .insert_resource(Gravity(Vec2::ZERO));
 
         // Add other plugins.
         app.add_plugins((
@@ -120,11 +119,5 @@ struct PausableSystems;
 pub struct PlayerCamera;
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn(
-        (
-            Name::new("Camera"),
-            PlayerCamera,
-            Camera2d,
-        )
-    );
+    commands.spawn((Name::new("Camera"), PlayerCamera, Camera2d));
 }

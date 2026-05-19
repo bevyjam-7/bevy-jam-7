@@ -2,7 +2,12 @@ use bevy::prelude::*;
 use rand::prelude::*;
 use std::time::Duration;
 
-use crate::{AppSystems, PausableSystems, audio::sound_effect, map::npc::Npc, player::{PlayerState, action::MovementController, player::PlayerAssets}};
+use crate::{
+    AppSystems, PausableSystems,
+    audio::sound_effect,
+    map::npc::Npc,
+    player::{PlayerState, action::MovementController, player::PlayerAssets},
+};
 
 pub(super) fn plugin(app: &mut App) {
     // Animate and play sound effects based on controls.
@@ -21,20 +26,17 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(PausableSystems),
     );
 
-        app.add_systems(
+    app.add_systems(
         Update,
         (
-        update_static_animation_timer.in_set(AppSystems::TickTimers),
-        (
-            update_static_animation_atlas,
-            gaze_follow_player
+            update_static_animation_timer.in_set(AppSystems::TickTimers),
+            (update_static_animation_atlas, gaze_follow_player)
+                .chain()
+                .in_set(AppSystems::Update),
         )
-            .chain()
-            .in_set(AppSystems::Update)
-        ).in_set(PausableSystems)
+            .in_set(PausableSystems),
     );
 }
-
 
 // Player and Ghost animations are very similar, with them sharing basically everything.
 
@@ -65,11 +67,10 @@ pub enum FacingDirection {
     Down,
 }
 
-
 /// Update the animation timer.
 fn update_animation_timer(
-    time: Res<Time>, 
-    mut query: Query<&mut PlayerAnimation, With<MovementController>>
+    time: Res<Time>,
+    mut query: Query<&mut PlayerAnimation, With<MovementController>>,
 ) {
     for mut animation in &mut query {
         animation.update_timer(time.delta());
@@ -92,27 +93,22 @@ fn update_animation_movement(
         let animation_state = if controller.intent == Vec2::ZERO {
             PlayerAnimationState::Idling
         } else {
-            // If the player is moving in both x and y direction, prioritize vertical animation. 
+            // If the player is moving in both x and y direction, prioritize vertical animation.
             if controller.intent.y > 0.0 {
-                
                 match player_state.get() {
                     PlayerState::Awake => {
                         animation.facing = FacingDirection::Up;
                         PlayerAnimationState::WalkingUp
-                    },
-                    PlayerState::Asleep => {
-                        PlayerAnimationState::WalkingSide
-                    },
+                    }
+                    PlayerState::Asleep => PlayerAnimationState::WalkingSide,
                 }
             } else if controller.intent.y < 0.0 {
                 match player_state.get() {
                     PlayerState::Awake => {
                         animation.facing = FacingDirection::Down;
                         PlayerAnimationState::WalkingDown
-                    },
-                    PlayerState::Asleep => {
-                        PlayerAnimationState::WalkingSide
-                    },
+                    }
+                    PlayerState::Asleep => PlayerAnimationState::WalkingSide,
                 }
             } else {
                 animation.facing = FacingDirection::Side;
@@ -135,8 +131,6 @@ fn update_animation_atlas(mut query: Query<(&mut PlayerAnimation, &mut Sprite)>)
     }
 }
 
-
-
 /// If the player is moving, play a step sound effect synchronized with the
 /// animation.
 fn trigger_step_sound_effect(
@@ -145,7 +139,9 @@ fn trigger_step_sound_effect(
     mut step_query: Query<&mut PlayerAnimation, With<MovementController>>,
 ) {
     for mut animation in &mut step_query {
-        if (animation.state == PlayerAnimationState::WalkingSide || animation.state == PlayerAnimationState::WalkingUp || animation.state == PlayerAnimationState::WalkingDown)
+        if (animation.state == PlayerAnimationState::WalkingSide
+            || animation.state == PlayerAnimationState::WalkingUp
+            || animation.state == PlayerAnimationState::WalkingDown)
             && animation.should_update_sprite()
             && (animation.frame == 1 || animation.frame == 3)
         {
@@ -271,18 +267,13 @@ pub struct StaticAnimation {
     atlas_cols: usize,
 }
 
-fn update_static_animation_timer(
-    time: Res<Time>,
-    mut query: Query<&mut StaticAnimation>,
-) {
+fn update_static_animation_timer(time: Res<Time>, mut query: Query<&mut StaticAnimation>) {
     for mut animation in &mut query {
         animation.update_timer(time.delta());
     }
 }
 
-fn update_static_animation_atlas(
-    mut query: Query<(&mut StaticAnimation, &mut Sprite)>,
-) {
+fn update_static_animation_atlas(mut query: Query<(&mut StaticAnimation, &mut Sprite)>) {
     for (mut animation, mut sprite) in &mut query {
         let Some(atlas) = sprite.texture_atlas.as_mut() else {
             continue;

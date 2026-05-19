@@ -34,7 +34,7 @@ fn created_by() -> impl Bundle {
     grid(vec![
         ["Kain Dean (Kainosaur)", "Programmer"],
         ["Nichele Phillips (SciencesPatchwork)", "Art"],
-        ["sonic8815", "Programmerr"]
+        ["sonic8815", "Programmerr"],
     ])
 }
 
@@ -46,7 +46,10 @@ fn assets() -> impl Bundle {
             "Bevy logo",
             "All rights reserved by the Bevy Foundation, permission granted for splash screen use when unmodified",
         ],
-        ["Dialogue powered by Yarn Spinner", " https://yarnspinner.dev"]
+        [
+            "Dialogue powered by Yarn Spinner",
+            " https://yarnspinner.dev",
+        ],
     ])
 }
 

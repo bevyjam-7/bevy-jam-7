@@ -11,7 +11,7 @@ pub const OLD_HOUSE_LOCATION: Vec3 = Vec3::new(2800., 0., -20.);
 // Thickness of collision borders around the map
 pub const BORDER_THICKNESS: f32 = 50.0;
 // x right border offset, y left border offset, z top border offset, w bottom border offset FOR Y AXIS
-pub const Y_BRIDGE_SECTION_BORDER_OFFSETS: Vec4 = Vec4::new(0.,0.,-190.,339.);
+pub const Y_BRIDGE_SECTION_BORDER_OFFSETS: Vec4 = Vec4::new(0., 0., -190., 339.);
 pub const BROKEN_BRIDGE_COLLISION_LOCATION: Vec3 = Vec3::new(-122., 70., 0.);
 
 // Player related constants
@@ -35,9 +35,8 @@ pub const TRIPWIRE_HOUSE_TO_BRIDGE_POSITION: Vec3 = Vec3::new(235., 78., 0.);
 // The position is relative to the center of the bridge section
 pub const TRIPWIRE_BRIDGE_TO_HOUSE_POSITION: Vec3 = Vec3::new(-225., 75., 0.);
 pub const TRIPWIRE_BRIDGE_TO_OLD_POSITION: Vec3 = Vec3::new(225., 75., 0.);
-pub const TRIPWIRE_OLD_TO_BRIDGE_POSITION: Vec3 = Vec3::new(-225., 0., 0.,);
+pub const TRIPWIRE_OLD_TO_BRIDGE_POSITION: Vec3 = Vec3::new(-225., 0., 0.);
 pub const TRIPWIRE_PROXIMITY_RADIUS: f32 = 30.0;
-
 
 pub mod pickup {
     pub const DEFAULT_RADIUS: f32 = 30.0;

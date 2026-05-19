@@ -1,8 +1,4 @@
 use avian2d::prelude::*;
-use bevy::prelude::*;
-
-use crate::Pause;
-
 
 #[derive(PhysicsLayer, Clone, Copy, Debug, Default)]
 pub enum GameLayer {
@@ -11,7 +7,6 @@ pub enum GameLayer {
     Player,
     GhostPlayer,
     Border,
-    Ground,
     BrokenBridge,
     OldBookshelf,
 }

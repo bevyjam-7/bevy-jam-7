@@ -2,7 +2,6 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use bevy_yarnspinner::prelude::*;
 
-use crate::Pause;
 use crate::dialogue::assets::image_handle;
 
 pub(crate) fn ui_setup_plugin(app: &mut App) {

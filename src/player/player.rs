@@ -2,13 +2,23 @@
 
 use bevy::{
     image::{ImageLoaderSettings, ImageSampler},
-    prelude::*, sprite::Anchor,
+    prelude::*,
+    sprite::Anchor,
 };
 
 use leafwing_input_manager::prelude::*;
 
 use crate::{
-    assets::{animation::{FacingDirection, PlayerAnimation}, asset_tracking::LoadResource}, game_consts::PLAYER_SPEED, map::physics::GameLayer, player::{PlayerState, action::{MovementController, PlayerAction, TouchingBrokenBridge}}
+    assets::{
+        animation::{FacingDirection, PlayerAnimation},
+        asset_tracking::LoadResource,
+    },
+    game_consts::PLAYER_SPEED,
+    map::physics::GameLayer,
+    player::{
+        PlayerState,
+        action::{MovementController, PlayerAction, TouchingBrokenBridge},
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -27,7 +37,7 @@ pub fn player(
 ) -> impl Bundle {
     // A texture atlas is a way to split a single image into a grid of related images.
     // You can learn more in this example: https://github.com/bevyengine/bevy/blob/latest/examples/2d/texture_atlas.rs
-    let layout= TextureAtlasLayout::from_grid(UVec2::splat(64), 4, 3, Some(UVec2::splat(1)), None);
+    let layout = TextureAtlasLayout::from_grid(UVec2::splat(64), 4, 3, Some(UVec2::splat(1)), None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new(facing);
 
@@ -47,7 +57,7 @@ pub fn player(
             },
             TextureAtlas {
                 layout: texture_atlas_layout,
-                index:0,
+                index: 0,
             },
         ),
         Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
@@ -67,16 +77,12 @@ pub fn player(
             ),
             PlayerState::Asleep => CollisionLayers::new(
                 GameLayer::GhostPlayer,
-                [
-                    GameLayer::Default,
-                    GameLayer::Border,
-                ],
+                [GameLayer::Default, GameLayer::Border],
             ),
         },
-
         LinearVelocity::default(),
         ActionTimer {
-            timer: Timer::from_seconds(0.5, TimerMode::Once)
+            timer: Timer::from_seconds(0.5, TimerMode::Once),
         },
         Anchor::BOTTOM_CENTER,
         MovementController {
@@ -107,8 +113,8 @@ pub struct PlayerAssets {
 }
 
 #[derive(Component)]
-pub struct ActionTimer{
-    pub timer: Timer
+pub struct ActionTimer {
+    pub timer: Timer,
 }
 
 impl FromWorld for PlayerAssets {
@@ -138,4 +144,3 @@ impl FromWorld for PlayerAssets {
         }
     }
 }
-
