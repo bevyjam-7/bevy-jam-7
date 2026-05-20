@@ -3,29 +3,30 @@ use bevy_yarnspinner::prelude::*;
 
 use crate::{
     game_consts::{
-        BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_B_LOCATION, TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION, TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION, TRIPWIRE_PROXIMITY_RADIUS, WITCH_HOUSE_LOCATION
+        BRIDGE_SECTION_LOCATION, OLD_HOUSE_LOCATION, TELEPORTER_B_LOCATION,
+        TRIPWIRE_BRIDGE_TO_HOUSE_POSITION, TRIPWIRE_BRIDGE_TO_OLD_POSITION,
+        TRIPWIRE_HOUSE_TO_BRIDGE_POSITION, TRIPWIRE_OLD_TO_BRIDGE_POSITION,
+        TRIPWIRE_PROXIMITY_RADIUS, WITCH_HOUSE_LOCATION,
     },
-    inventory::inventory::{ItemKind, ObjectPickable},
-    map::{npc::NpcInteractionBox, teleporter::Teleportable},
+    map::{interaction_box::{InteractableObject, ObjectInteractionType}, npc::NpcInteractionBox, object::{ItemKind, ObjectAssets, spawn_object}, teleporter::Teleportable},
     player::{
-        action::MovementController,
+        actions::MovementController,
         player::{AwakePlayer, GhostPlayer},
     },
-    game_gui::screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
-            Update,
-            (
-                player_transition_between_sections,
-                interaction_box_detect_player,
-                check_bread_on_teleporter_b,
-            )
-                .chain()
+        Update,
+        (
+            player_transition_between_sections,
+            interaction_box_detect_player,
+            check_bread_on_teleporter_b,
         )
-        .add_observer(run_dialogue)
-        .add_observer(spawn_reward_item);
+            .chain(),
+    )
+    .add_observer(run_dialogue)
+    .add_observer(spawn_reward_item);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -150,27 +151,22 @@ pub struct SpawnRewardEvent;
 pub fn spawn_reward_item(
     _: On<SpawnRewardEvent>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    object_assets_resource: Option<Res<ObjectAssets>,>
 ) {
-    // Spawn a Bridge Piece
-    let reward_mesh = meshes.add(Rectangle::new(40.0, 15.0)); // Bridge-like shape
-    let reward_material = materials.add(ColorMaterial::from(Color::srgb(0.55, 0.27, 0.07))); // Brown/wood color
+    if let Some(ref object_assets) = object_assets_resource {
+        // Spawn a Bridge Piece
+        commands.spawn(spawn_object(
+            ItemKind::Object1,
+            ObjectInteractionType::Pickable(ItemKind::Object1),
+            object_assets,
+            TELEPORTER_B_LOCATION + Vec3::new(0.,0.,1.),
+        )); 
 
-    commands.spawn((
-        Name::new("Bridge Piece"),
-        ObjectPickable::new(ItemKind::Object1),
-        Transform::from_translation(TELEPORTER_B_LOCATION + OLD_HOUSE_LOCATION),
-        GlobalTransform::default(),
-        Mesh2d(reward_mesh),
-        MeshMaterial2d(reward_material),
-        DespawnOnExit(Screen::Gameplay), // Add if needed
-    ));
-
-    info!(
-        "Spawned Bridge Piece at position: {:?}",
-        TELEPORTER_B_LOCATION + OLD_HOUSE_LOCATION
-    );
+        info!(
+            "Spawned Bridge Piece at position: {:?}",
+            TELEPORTER_B_LOCATION + OLD_HOUSE_LOCATION
+        );
+    };
 }
 
 // Dialogue when the game first starts.
@@ -285,7 +281,7 @@ fn interaction_box_detect_player(
 // finds and checks for specific item on teleporter b in old house
 fn check_bread_on_teleporter_b(
     mut has_printed: Local<bool>,
-    item_query: Query<(&ObjectPickable, Option<&Teleportable>)>,
+    item_query: Query<(&InteractableObject, Option<&Teleportable>)>,
     teleporter_query: Query<(&Name, Entity)>,
     mut game_progress: Query<&mut GameProgressTracker>,
 ) {
@@ -305,17 +301,22 @@ fn check_bread_on_teleporter_b(
     let mut bread_on_teleporter = false;
 
     for (pickable, teleportable) in &item_query {
-        if pickable.kind == ItemKind::Food1 {
-            if let Some(tp) = teleportable {
-                if tp.on_teleporter_entity == tp_b_entity {
-                    if !*has_printed {
-                        info!("\nBread is on teleporter B!");
-                        *has_printed = true;
+        match pickable.object_type {
+            ObjectInteractionType::Pickable(pick_object) => {
+                if pick_object == ItemKind::Food1 {
+                    if let Some(tp) = teleportable {
+                        if tp.on_teleporter_entity == tp_b_entity {
+                            if !*has_printed {
+                                info!("\nBread is on teleporter B!");
+                                *has_printed = true;
+                            }
+                            bread_on_teleporter = true;
+                            break;
+                        }
                     }
-                    bread_on_teleporter = true;
-                    break;
                 }
-            }
+            },
+            _ => continue,
         }
     }
 

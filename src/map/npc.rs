@@ -5,7 +5,7 @@ use bevy::{
 
 use crate::{
     assets::{animation::StaticAnimation, asset_tracking::LoadResource},
-    game_consts::{NPC_ATLAS_COLS, NPC_ATLAS_ROWS, NPC_LOCATION, OLD_HOUSE_LOCATION},
+    game_consts::{NPC_ATLAS_COLS, NPC_ATLAS_ROWS, NPC_LOCATION, OLD_HOUSE_LOCATION}, map::interaction_box::{InteractableObject, ObjectInteractionType},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -41,6 +41,10 @@ pub fn spawn_npc(
             ..default()
         },
         npc_animation,
+        InteractableObject {
+            object_type: ObjectInteractionType::NPC,
+            interaction_radius: 500.
+        },
     )
 }
 

@@ -9,10 +9,9 @@ mod audio;
 mod dev_tools;
 mod dialogue;
 pub mod game_consts;
-mod inventory;
+mod game_gui;
 mod map;
 mod player;
-mod game_gui;
 
 use avian2d::{PhysicsPlugins, prelude::Gravity};
 
@@ -66,7 +65,6 @@ impl Plugin for AppPlugin {
             #[cfg(feature = "dev")]
             dev_tools::plugin,
             map::plugin,
-            inventory::plugin,
             game_gui::plugin,
         ));
 

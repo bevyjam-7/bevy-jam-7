@@ -4,7 +4,7 @@ use crate::{
     game_consts::PLAYER_SPEED,
     player::{
         PlayerState,
-        action::{MovementController, PlayerAction},
+        actions::{MovementController, PlayerAction},
         player::{AwakePlayer, GhostPlayer},
     },
 };

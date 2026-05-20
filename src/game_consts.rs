@@ -6,7 +6,7 @@ pub const WITCH_HOUSE_ATLAS_ROWS: u32 = 1;
 pub const SCENE_TILE_SIZES: UVec2 = UVec2::new(256, 320);
 pub const WITCH_HOUSE_LOCATION: Vec3 = Vec3::new(0., 0., 0.);
 pub const BRIDGE_SECTION_LOCATION: Vec3 = Vec3::new(1400., 0., -20.);
-pub const OLD_HOUSE_LOCATION: Vec3 = Vec3::new(2800., 0., -20.);
+pub const OLD_HOUSE_LOCATION: Vec3 = Vec3::new(2800., 0., 0.);
 
 // Thickness of collision borders around the map
 pub const BORDER_THICKNESS: f32 = 50.0;
@@ -24,12 +24,12 @@ pub const PLAYER_SPEED: f32 = 7000.0;
 // Npc related constants
 pub const NPC_ATLAS_COLS: usize = 2;
 pub const NPC_ATLAS_ROWS: usize = 1;
-pub const NPC_LOCATION: Vec3 = Vec3::new(137., -100., 0.0);
+pub const NPC_LOCATION: Vec3 = Vec3::new(137., -100., 1.0);
 
 // Teleporter related constants
 pub const TELEPORTER_A_LOCATION: Vec3 = Vec3::new(-70., -70., 1.);
-pub const TELEPORTER_B_LOCATION: Vec3 = Vec3::new(0., 0., 1.);
-pub const TELEPORTER_PROXIMITY_RADIUS: f32 = 100.0;
+pub const TELEPORTER_B_LOCATION: Vec3 = Vec3::new(-75., -70., 1.);
+pub const TELEPORTER_PROXIMITY_RADIUS: f32 = 1000.0;
 
 pub const TRIPWIRE_HOUSE_TO_BRIDGE_POSITION: Vec3 = Vec3::new(235., 78., 0.);
 // The position is relative to the center of the bridge section

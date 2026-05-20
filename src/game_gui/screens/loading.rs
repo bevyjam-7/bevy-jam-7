@@ -3,7 +3,10 @@
 
 use bevy::prelude::*;
 
-use crate::{assets::asset_tracking::ResourceHandles, game_gui::{screens::Screen, theme::widget}};
+use crate::{
+    assets::asset_tracking::ResourceHandles,
+    game_gui::{screens::Screen, theme::widget},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Loading), spawn_loading_screen);

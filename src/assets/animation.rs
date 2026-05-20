@@ -6,7 +6,7 @@ use crate::{
     AppSystems, PausableSystems,
     audio::sound_effect,
     map::npc::Npc,
-    player::{PlayerState, action::MovementController, player::PlayerAssets},
+    player::{PlayerState, actions::MovementController, player::PlayerAssets},
 };
 
 pub(super) fn plugin(app: &mut App) {

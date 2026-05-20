@@ -4,8 +4,8 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     Pause,
-    map::{events::start_dialogue, level::spawn_level},
     game_gui::{menus::Menu, screens::Screen},
+    map::{events::start_dialogue, level_spawn::spawn_level},
 };
 
 pub(super) fn plugin(app: &mut App) {

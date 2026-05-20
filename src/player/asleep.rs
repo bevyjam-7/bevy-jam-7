@@ -1,13 +1,13 @@
 use avian2d::prelude::LinearVelocity;
 use bevy::prelude::*;
 
-use crate::map::level::Level;
+use crate::map::level_spawn::Level;
+use crate::player::actions::{MovementController, PlayerAction};
 use crate::{
     assets::animation::{FacingDirection, PlayerAnimation, PlayerAnimationState},
     map::events::DialogueSelected,
     player::{
         PlayerState,
-        action::{MovementController, PlayerAction},
         player::{AwakePlayer, GhostPlayer, PlayerAssets, player},
     },
 };

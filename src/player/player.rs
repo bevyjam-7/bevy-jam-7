@@ -17,7 +17,7 @@ use crate::{
     map::physics::GameLayer,
     player::{
         PlayerState,
-        action::{MovementController, PlayerAction, TouchingBrokenBridge},
+        actions::{MovementController, PlayerAction},
     },
 };
 
@@ -49,7 +49,6 @@ pub fn player(
 
     (
         Name::new(name),
-        TouchingBrokenBridge::default(),
         Sprite::from_atlas_image(
             match player_state.get() {
                 PlayerState::Awake => player_assets.player_awake.clone(),

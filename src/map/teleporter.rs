@@ -1,25 +1,19 @@
 use bevy::prelude::*;
 
-use crate::inventory::inventory::ObjectPickable;
+use crate::map::interaction_box::{InteractableObject, ObjectInteractionType};
 use crate::{
-    AppSystems, PausableSystems,
     game_consts::TELEPORTER_PROXIMITY_RADIUS,
-    map::events::{DialogueSelected, GameProgressTracker},
-    player::{
-        PlayerState,
-        player::GhostPlayer,
-    },
-    game_gui::screens::Screen,
+    game_gui::screens::Screen
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        (ghost_player_near_teleporter, detect_items_on_teleporters)
-            .chain()
-            .in_set(AppSystems::Update)
-            .in_set(PausableSystems),
-    );
+    // app.add_systems(
+    //     Update,
+    //     (ghost_player_near_teleporter, detect_items_on_teleporters)
+    //         .chain()
+    //         .in_set(AppSystems::Update)
+    //         .in_set(PausableSystems),
+    // );
 }
 
 // Teleporter component.
@@ -90,92 +84,6 @@ fn unlink_object_from_tp(
     );
 }
 
-fn detect_items_on_teleporters(
-    mut commands: Commands,
-    item_query: Query<(Entity, &Transform), With<ObjectPickable>>,
-    teleportable_query: Query<&Teleportable>,
-    mut teleporter_query: Query<(Entity, &Transform, &mut Teleporter)>,
-    mut game_progress: Query<&mut GameProgressTracker>,
-) {
-    for (item_entity, item_transform) in &item_query {
-        let mut is_near_teleporter = false;
-        let mut nearest_tp_entity = None;
-
-        // Check if item is near any teleporter
-        for (tp_entity, tp_transform, _) in &teleporter_query {
-            let distance = item_transform
-                .translation
-                .distance(tp_transform.translation);
-
-            if distance < TELEPORTER_PROXIMITY_RADIUS {
-                is_near_teleporter = true;
-                nearest_tp_entity = Some(tp_entity);
-                let Ok(progress) = game_progress.single_mut() else {
-                    return;
-                };
-                if progress.teleporter_guide == false {
-                    commands.trigger(DialogueSelected {
-                        s: "ItemOnTeleporterGuide".to_string(),
-                    });
-                }
-                break;
-            }
-        }
-
-        // Check if item already has Teleportable component
-        if let Ok(teleportable) = teleportable_query.get(item_entity) {
-            // Item is already linked to a teleporter
-            if !is_near_teleporter {
-                // Item moved away - unlink it
-                unlink_object_from_tp(
-                    item_entity,
-                    teleportable.on_teleporter_entity,
-                    &mut commands,
-                    &mut teleporter_query,
-                );
-            }
-        } else {
-            // Item is not linked to any teleporter
-            if is_near_teleporter {
-                // Item is now near a teleporter - link it
-                if let Some(tp_entity) = nearest_tp_entity {
-                    link_object_to_tp(item_entity, tp_entity, &mut commands, &mut teleporter_query);
-                }
-            }
-        }
-    }
-}
-
-/// Query if player is near a teleporter
-fn ghost_player_near_teleporter(
-    player_state: Res<State<PlayerState>>,
-    player_query: Query<&Transform, With<GhostPlayer>>,
-    mut teleporter_query: Query<(&Transform, &mut Teleporter)>,
-) {
-    if player_state.get() != &PlayerState::Asleep {
-        return; // Only check for teleportation when the player is awake.
-    }
-
-    // First, reset all teleporters to can_teleport = false
-    for (_teleporter_transform, mut teleporter) in &mut teleporter_query {
-        teleporter.can_teleport = false;
-    }
-
-    // Then check if player is near any teleporter
-    for player_transform in &player_query {
-        for (teleporter_transform, mut teleporter) in &mut teleporter_query {
-            let distance = player_transform
-                .translation
-                .distance(teleporter_transform.translation);
-            if distance < TELEPORTER_PROXIMITY_RADIUS {
-                teleporter.can_teleport = true;
-                info!("\nGhost player is near teleporter, can teleport.");
-                // Don't return here - let it check all teleporters in case player is near multiple
-            }
-        }
-    }
-}
-
 /// Bundle creation for a pair of teleporters
 pub fn create_teleporter_pair(
     position_a: Vec3,
@@ -223,11 +131,17 @@ pub fn link_teleporters(
         containing_entity: Entity::PLACEHOLDER,
         tele_buddy: teleporter_b_entity,
         can_teleport: false,
+    }).insert(InteractableObject {
+        object_type: ObjectInteractionType::Teleporter,
+        interaction_radius: TELEPORTER_PROXIMITY_RADIUS,
     });
     commands.entity(teleporter_b_entity).insert(Teleporter {
         destination: position_a,
         containing_entity: Entity::PLACEHOLDER,
         tele_buddy: teleporter_a_entity,
         can_teleport: false,
+    }).insert(InteractableObject {
+        object_type: ObjectInteractionType::Teleporter,
+        interaction_radius: TELEPORTER_PROXIMITY_RADIUS,
     });
 }
